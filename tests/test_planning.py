@@ -89,3 +89,26 @@ class TestVolumeAccounting:
     def test_unknown_categories_are_ignored_rather_than_guessed(self):
         store = trained([(5, "SOMETHING_NEW", 10)])
         assert planning.group_load(store) == {}
+
+
+class TestPartnerRanking:
+    def test_partner_is_chosen_by_data_not_list_order(self):
+        """
+        Regression test. Affinity lists which groups pair sensibly; it must not
+        decide which of them wins. This originally took the first recovered
+        entry, so core paired with back over shoulders purely because "back"
+        was typed first — even with back carrying far more volume.
+        """
+        store = trained([
+            (11, "CORE", 3),
+            (2, "ROW", 85),             # back: recovered but heavily trained
+            (2, "SHOULDER_PRESS", 50),  # shoulders: recovered and less trained
+        ])
+        result = planning.suggest_focus(store)
+        assert result["primary"] == "core"
+        assert result["partner"] == "shoulders"
+
+    def test_falls_outside_affinity_only_when_nothing_else_is_ready(self):
+        store = trained([(11, "CORE", 3), (0, "ROW", 40), (5, "CURL", 40)])
+        result = planning.suggest_focus(store)
+        assert result["partner"] == "biceps"

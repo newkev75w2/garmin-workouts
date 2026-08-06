@@ -67,13 +67,16 @@ def suggest_focus(store: dict | None = None) -> dict:
         }
 
     primary = max(ready, key=lambda n: ready[n]["score"])
-    partner = next(
-        (p for p in GROUP_AFFINITY.get(primary, []) if p in ready and p != primary),
-        None,
-    )
-    if partner is None:
-        remaining = {n: g for n, g in ready.items() if n != primary}
-        partner = max(remaining, key=lambda n: remaining[n]["score"], default=None)
+    # Affinity says which groups pair sensibly; it must not decide which of them
+    # to pick. Taking the first entry meant list order silently outranked the
+    # data — core paired with back (85 sets) over shoulders (50) purely because
+    # "back" was typed first. Rank the plausible partners the same way the
+    # primary was ranked, and only fall back outside the affinity list if none
+    # of them are recovered.
+    partners = [p for p in GROUP_AFFINITY.get(primary, []) if p in ready and p != primary]
+    if not partners:
+        partners = [n for n in ready if n != primary]
+    partner = max(partners, key=lambda n: ready[n]["score"], default=None)
 
     p = loads[primary]
     reason = (
