@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 STORE_PATH = ROOT / "performance.json"
 HISTORY_PATH = ROOT / "history.json"
 
+
 def read_store() -> dict:
     """
     Current contents, or an empty store if nothing has been synced.
@@ -63,6 +64,7 @@ def prescribed_reps() -> dict:
             if ex.get("reps"):
                 targets[ex["name"]] = ex["reps"]  # later entries overwrite earlier
     return targets
+
 
 def session_summaries(store: dict) -> dict:
     """

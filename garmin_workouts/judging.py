@@ -12,6 +12,7 @@ from .constants import (
 )
 from .store import days_since, load_store, prescribed_reps, session_summaries
 
+
 def load_increment(weight: float | None) -> float:
     """Next sensible jump. Bigger lifts tolerate bigger steps."""
     if not weight:

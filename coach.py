@@ -43,7 +43,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    args = build_parser().parse_args()
+    parser = build_parser()
+    args = parser.parse_args()
+
+    # These only mean anything to --suggest. Silently ignoring them would hand
+    # back today's answer to someone who asked about Monday, with no hint that
+    # the date was dropped.
+    if (args.as_of or args.planned or args.planned_date) and not args.suggest:
+        parser.error("--as-of, --planned and --planned-date only apply to --suggest")
 
     if args.suggest:
         as_of = date.fromisoformat(args.as_of) if args.as_of else None

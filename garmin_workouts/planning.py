@@ -5,11 +5,13 @@ Choosing which muscle groups to train next, from recovery and volume.
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import date
 
 from .constants import CATEGORY_PRIMARY_GROUP, GROUP_AFFINITY, MIN_RECOVERY_DAYS
 from .store import days_since, load_store
 
-def group_load(store: dict, as_of=None) -> dict:
+
+def group_load(store: dict, as_of: date | None = None) -> dict:
     """Per muscle group: when it was last trained, how often, and how much."""
     stats = defaultdict(lambda: {"last": "", "sets": 0, "sessions": set()})
     for act in store.get("activities", {}).values():
@@ -34,7 +36,12 @@ def group_load(store: dict, as_of=None) -> dict:
     }
 
 
-def suggest_focus(store=None, as_of=None, planned=None, planned_date=None) -> dict:
+def suggest_focus(
+    store: dict | None = None,
+    as_of: date | None = None,
+    planned: list | None = None,
+    planned_date: date | None = None,
+) -> dict:
     """
     Recommend which muscle groups to train next.
 
@@ -43,6 +50,17 @@ def suggest_focus(store=None, as_of=None, planned=None, planned_date=None) -> di
     little that group has had relative to the most-trained one). The pairing
     then comes from GROUP_AFFINITY so the session still makes sense as a
     workout rather than two unrelated halves.
+
+    `as_of` is the day being planned for, so "what should I train on Monday"
+    measures recovery to Monday rather than to today. `planned` names groups the
+    user intends to train on `planned_date` but hasn't logged yet — those still
+    consume recovery, otherwise planning around an intended session prescribes
+    the same muscles twice.
+
+    Known limitation: volume deficit dominates the score, so a badly
+    under-trained group keeps winning even shortly after it was trained. The
+    caller is expected to weigh that against sensible programming rather than
+    read the result out verbatim.
     """
     store = store or load_store()
     loads = group_load(store, as_of)

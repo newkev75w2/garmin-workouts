@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 
+
 def load_workout(path: str) -> dict:
     spec = importlib.util.spec_from_file_location("workout", path)
     mod = importlib.util.module_from_spec(spec)

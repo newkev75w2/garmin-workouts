@@ -9,11 +9,16 @@ without capturing stdout.
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import date
 
 from . import history, planning, store
 
 
-def print_suggestion(as_of=None, planned=None, planned_date=None) -> None:
+def print_suggestion(
+    as_of: date | None = None,
+    planned: list | None = None,
+    planned_date: date | None = None,
+) -> None:
     s = planning.suggest_focus(as_of=as_of, planned=planned, planned_date=planned_date)
     groups = sorted(s["groups"].items(), key=lambda kv: kv[1]["days_ago"], reverse=True)
 
