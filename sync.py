@@ -1,31 +1,14 @@
 #!/usr/bin/env python3
 """
-Pull completed strength sessions down from Garmin Connect into performance.json.
+Pull completed strength sessions from Garmin Connect.
 
-    python sync.py            # last 30 activities
-    python sync.py 100        # look further back
-
-Re-running is safe — sessions already pulled are skipped. The work itself lives
-in garmin_workouts/sync.py.
+Kept so existing commands and docs keep working; `garmin sync` does the same
+thing. The implementation lives in garmin_workouts/cli.py.
 """
 
-from __future__ import annotations
+import sys
 
-import argparse
-
-from garmin_workouts.sync import sync
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Pull completed strength sessions from Garmin Connect."
-    )
-    parser.add_argument(
-        "limit", nargs="?", type=int, default=30,
-        help="how many recent activities to scan (default 30)",
-    )
-    sync(parser.parse_args().limit)
-
+from garmin_workouts.cli import main
 
 if __name__ == "__main__":
-    main()
+    main(["sync"] + sys.argv[1:])

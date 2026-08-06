@@ -13,9 +13,11 @@ import os
 import sys
 from pathlib import Path
 
+from .paths import token_store
+
 from garminconnect import Garmin
 
-TOKENSTORE = str(Path(__file__).resolve().parent.parent / ".garmin_session")
+TOKENSTORE = str(token_store())
 
 
 def _make_client(email=None, password=None) -> Garmin:
@@ -89,4 +91,32 @@ def legacy_login(email: str, password: str):
 
     client.display_name = garth_client.profile["displayName"]
     client.full_name = garth_client.profile["fullName"]
+    return client
+
+
+def interactive_login():
+    """
+    Prompt for credentials once and cache the resulting session.
+
+    Credentials are read at run time and never stored — only the session token
+    is written, into a gitignored directory.
+    """
+    import getpass
+    import os
+    import sys
+
+    import garminconnect
+
+    version = getattr(garminconnect, "__version__", "unknown")
+    mode = "modern" if supports_prompt_mfa() else "legacy (0.2.x / garth)"
+    print(f"garminconnect version: {version}  ->  using {mode} auth flow")
+    print(f"python: {sys.version.split()[0]}\n")
+
+    email = os.getenv("GARMIN_EMAIL") or input("Garmin email: ")
+    password = os.getenv("GARMIN_PASSWORD") or getpass.getpass("Garmin password: ")
+
+    client = modern_login(email, password) if supports_prompt_mfa() else legacy_login(email, password)
+
+    print(f"\nLogged in as: {client.get_full_name()}")
+    print(f"Session cached at {TOKENSTORE} — nothing else will prompt.")
     return client

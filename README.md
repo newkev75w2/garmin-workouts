@@ -13,7 +13,7 @@ The skill lives in [`SKILL.md`](SKILL.md) and is packaged as a `.skill` file
 that gets loaded into Claude Code / Claude Desktop. It triggers whenever you
 ask to create a Garmin gym/strength workout.
 
-0. **Claude pulls your recent performance first** (`sync.py` + `coach.py`) and
+0. **Claude pulls your recent performance first** (`garmin sync` + `garmin coach`) and
    programs off what you actually lifted — see [Closing the loop](#closing-the-loop).
 1. **You provide at least 2 muscle groups** (e.g. "chest and shoulders").
    Duration defaults to 45–50 minutes unless you ask for something else.
@@ -27,7 +27,7 @@ ask to create a Garmin gym/strength workout.
    becomes `chest_shoulders_2.py`, and so on).
 4. **You run the upload command** it gives you:
    ```bash
-   python upload.py workouts/<filename>.py
+   garmin upload workouts/<filename>.py
    ```
 
 Each generated workout has **at least 8 exercises**, ordered heaviest-compound
@@ -37,18 +37,18 @@ finishers 45s.
 
 ## Closing the loop
 
-Uploading a workout is only half of it. `sync.py` pulls **completed** sessions
-back down from Garmin Connect — actual reps and weight, per set — and `coach.py`
+Uploading a workout is only half of it. `garmin sync` pulls **completed** sessions
+back down from Garmin Connect — actual reps and weight, per set — and `garmin coach`
 judges them, so the next workout is built on real numbers instead of guesswork.
 
 ```bash
-python sync.py             # pull completed sessions into performance.json
-python coach.py            # verdict + next step for every exercise
-python coach.py --suggest  # which muscle groups to train next, and why
-python coach.py --brief --muscles chest shoulders   # what the skill reads
+garmin sync             # pull completed sessions into performance.json
+garmin coach            # verdict + next step for every exercise
+garmin suggest          # which muscle groups to train next, and why
+garmin coach --brief --muscles chest shoulders   # what the skill reads
 ```
 
-`--suggest` answers "what should I train today?" from the log rather than habit —
+`garmin suggest` answers "what should I train today?" from the log rather than habit —
 it ranks every group by recovery (nothing trained inside 48h is offered) and by
 volume deficit against your most-trained group:
 
@@ -80,7 +80,7 @@ stores bodyweight and sometimes the added or assist load.
 
 Taken at face value that data calls about a fifth of all exercises "regressed"
 and would have you cutting load you never lost. So before judging anything,
-`coach.py`:
+the analysis:
 
 - excludes sessions whose top weight falls outside 60–180% of that exercise's
   own median, and anything past an absolute plausibility ceiling
@@ -98,17 +98,18 @@ data and this repo is public.
 
 ## Repo layout
 
-Command-line entry points live at the root; the logic they call sits in the
+`pip install -e .` provides the `garmin` command; everything it does lives in the
 `garmin_workouts/` package, so it can be tested without going near the network.
+The root scripts are thin shims kept so older `python coach.py` style commands
+still work.
 
 | File | Purpose |
 |---|---|
 | `SKILL.md` | The skill definition Claude reads — workflow, exercise reference table, rest-time/duration rules, coach programming guidelines. |
-| `login.py` | One-time interactive login. Caches a session to `.garmin_session/` (git-ignored) so you don't re-enter credentials every upload. |
-| `upload.py` | CLI: validate a workout and push it to Garmin Connect (`--dry-run` to check without uploading). |
-| `sync.py` | CLI: pull completed sessions into `performance.json` — actual reps and weight per set. Idempotent. |
-| `coach.py` | CLI: verdicts, `--suggest` muscle groups, `--brief` for the skill, `--prescribed` for programmed history. |
-| `validate.py` | CLI: check a workout's exercises against the Garmin FIT SDK enum list. |
+| `pyproject.toml` | Package metadata, dependencies, the `garmin` entry point and pytest config. |
+| `garmin_workouts/cli.py` | The `garmin` command and all its subcommands. |
+| `garmin_workouts/paths.py` | Where data lives — the checkout when run from one, `~/.garmin-workouts` when installed. |
+| `coach.py`, `sync.py`, `upload.py`, `validate.py`, `login.py` | Shims forwarding to `garmin <subcommand>`, kept for backwards compatibility. |
 | `garmin_workouts/constants.py` | Every tuned threshold and lookup table, in one documented place. |
 | `garmin_workouts/store.py` | Owns `performance.json` — reads it, shapes sessions per exercise, flags what can't be trusted. |
 | `garmin_workouts/sync.py` | Fetches completed sessions from Garmin and hands them to the store. |
@@ -125,7 +126,7 @@ Command-line entry points live at the root; the logic they call sits in the
 ## Tests
 
 ```bash
-pip install pytest
+pip install -e ".[dev]"
 python -m pytest
 ```
 
@@ -142,9 +143,13 @@ the one-pin cable drop) has a test naming what it protects against.
 ## Setup
 
 ```bash
-pip install -r requirements.txt --break-system-packages
-python login.py
+pip install -e .
+garmin login
 ```
+
+That installs the dependencies and puts a `garmin` command on your path. If you'd
+rather not install, `pip install -r requirements.txt` still works and every command
+below has a `python <script>.py` equivalent.
 
 `login.py` prompts for your Garmin email/password (and MFA code if enabled)
 interactively — credentials are never stored in code or passed as arguments,
@@ -155,14 +160,14 @@ only cached as a session token in `.garmin_session/`, which is git-ignored.
 Ask Claude to build a workout, confirm an option, then:
 
 ```bash
-python upload.py workouts/<filename>.py
+garmin upload workouts/<filename>.py
 ```
 
 To see what was *programmed* for an exercise over time (as opposed to what you
 actually lifted, which is what `coach.py` reports):
 
 ```bash
-python coach.py --prescribed "incline dumbbell bench"
+garmin coach --prescribed "incline dumbbell bench"
 ```
 
 ## Notes

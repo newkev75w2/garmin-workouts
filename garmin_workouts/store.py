@@ -12,8 +12,8 @@ import json
 import statistics
 from collections import defaultdict
 from datetime import date, datetime
-from pathlib import Path
 
+from .paths import history_path, performance_path
 from .constants import (
     ISOLATION_CATEGORIES,
     ISOLATION_CEILING,
@@ -23,9 +23,8 @@ from .constants import (
     WORKING_SET_THRESHOLD,
 )
 
-ROOT = Path(__file__).resolve().parent.parent
-STORE_PATH = ROOT / "performance.json"
-HISTORY_PATH = ROOT / "history.json"
+STORE_PATH = performance_path()
+HISTORY_PATH = history_path()
 
 
 def read_store() -> dict:

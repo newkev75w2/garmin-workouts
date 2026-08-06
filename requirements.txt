@@ -1,3 +1,7 @@
-# pip install -r requirements.txt --break-system-packages
-garminconnect>=0.3.0
+# Kept for `pip install -r requirements.txt`; pyproject.toml is the source of
+# truth and `pip install -e .` installs the same set plus the `garmin` command.
+#
+# garminconnect 0.3+ requires Python 3.10+. On 3.9 pip resolves to 0.2.8, which
+# uses the older garth auth flow — client.py handles either.
+garminconnect>=0.2.8
 garmin-fit-sdk

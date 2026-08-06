@@ -1,0 +1,6 @@
+garminconnect>=0.2.8
+garmin-fit-sdk
+
+[dev]
+pytest
+pyflakes

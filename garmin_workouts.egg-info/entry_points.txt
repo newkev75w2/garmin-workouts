@@ -1,0 +1,2 @@
+[console_scripts]
+garmin = garmin_workouts.cli:main

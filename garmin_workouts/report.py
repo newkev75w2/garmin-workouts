@@ -125,3 +125,21 @@ def print_brief(results: list) -> None:
             f"{r['exercise']}: {weight} x{reps} ({r['last_date']}, "
             f"{r['sessions']} sessions) [{r['verdict']}] -> {r['suggestion']}"
         )
+
+
+def print_workout(w: dict) -> None:
+    """The pre-upload summary: what is about to be sent to Garmin."""
+    from . import workout as wk
+
+    print(f"  Workout  : {w['name']}")
+    if w.get("description"):
+        print(f"  Focus    : {w['description']}")
+    print(f"  Duration : ~{wk.estimate_duration(w)} min")
+    print(f"  Exercises ({len(w['exercises'])}):")
+    for ex in w["exercises"]:
+        effort = f"{ex['sets']}x{ex.get('reps') or str(ex.get('seconds')) + 's'}"
+        print(
+            f"    - {ex['name'].replace('_', ' ').title():<38} "
+            f"{effort:<8} {ex['rest_seconds']}s rest"
+        )
+    print()

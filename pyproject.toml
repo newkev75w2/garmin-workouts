@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garmin-workouts"
+version = "1.1.0"
+description = "Build Garmin strength workouts from your own training history"
+requires-python = ">=3.9"
+# garminconnect 0.3+ needs Python 3.10+; on 3.9 pip can only reach 0.2.8, which
+# uses the older garth auth flow. client.py detects which is installed rather
+# than assuming, so both work — but the floor has to be one pip can satisfy.
+dependencies = [
+    "garminconnect>=0.2.8",
+    "garmin-fit-sdk",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pyflakes"]
+
+[project.scripts]
+garmin = "garmin_workouts.cli:main"
+
+[tool.setuptools]
+packages = ["garmin_workouts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]

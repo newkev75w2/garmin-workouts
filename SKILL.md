@@ -36,12 +36,17 @@ Ask for the **project root**, not an individual file — every command needs sib
 access just fails again one step later. If access is refused, say plainly that the skill can't
 run without it rather than pretending to have data.
 
-CLI entry points (these are what you invoke):
-- `sync.py` — pulls **completed** sessions down from Garmin into `performance.json` (actual reps and weight)
-- `coach.py` — verdicts per exercise; `--suggest`, `--brief`, `--muscles`, `--prescribed`
-- `upload.py` — validates then pushes a workout; `--dry-run` checks without uploading
-- `validate.py` — checks a workout's exercises against the real Garmin FIT SDK
-- `login.py` — one-time interactive auth, caches a session so nothing else prompts
+Everything runs through one command, `garmin`, installed via `pip install -e .`:
+- `garmin sync` — pulls **completed** sessions into `performance.json` (actual reps and weight)
+- `garmin suggest` — which muscle groups to train next; `--as-of`, `--planned`, `--planned-date`
+- `garmin coach` — verdicts per exercise; `--brief`, `--muscles`, `--prescribed`
+- `garmin upload <file>` — validates then pushes; `--dry-run` checks without uploading
+- `garmin validate <file>` — checks exercises against the real Garmin FIT SDK
+- `garmin login` — one-time interactive auth, caches a session so nothing else prompts
+
+If `garmin` is not found, run `pip install -e .` from the project directory. The older
+`python coach.py --suggest` form still works — the root scripts forward to the same code — so
+prefer `garmin ...`, but don't treat the old form as broken if you see it.
 
 The root scripts are argument parsing only. All logic lives in the `garmin_workouts/` package:
 `store` (owns `performance.json`), `sync` (fetches from Garmin), `judging` (verdicts),
@@ -51,7 +56,7 @@ The root scripts are argument parsing only. All logic lives in the `garmin_worko
 Change logic in the package, not in the root scripts. Tests are in `tests/` — run
 `python -m pytest` after touching anything in the package.
 
-**`progress.py` no longer exists** — it was folded into `python coach.py --prescribed`.
+**`progress.py` no longer exists** — it was folded into `garmin coach --prescribed`.
 
 **Read the Troubleshooting section at the bottom before debugging anything environment-related.**
 It documents real failures already hit and solved — don't rediscover them.
@@ -67,8 +72,8 @@ actually lifted, not on generic templates.
 
 ```bash
 cd ~/Projects/garmin-workouts
-python sync.py                                   # refresh from Garmin (idempotent)
-python coach.py --brief --muscles chest shoulders  # verdicts for today's muscle groups
+garmin sync                                    # refresh from Garmin (idempotent)
+garmin coach --brief --muscles chest shoulders # verdicts for today's muscle groups
 ```
 
 Each line comes back as:
@@ -94,13 +99,13 @@ Mention the two or three findings that actually shaped the workout — especiall
 `stalled` or `check-data` — so the user sees why it differs from last time. Don't dump the
 whole table at them.
 
-**Unlabelled sets.** `python coach.py` (no `--muscles` filter) ends with any sets that had
+**Unlabelled sets.** `garmin coach` (no `--muscles` filter) ends with any sets that had
 real weight and reps but no exercise name from the watch. These belong to no verdict, and
 they're frequently the heaviest work of the session — the watch classifies heavy barbell
 work poorly. Before acting on a `regressed` verdict, check whether that session has
 unlabelled heavy sets that are probably the same lift. Ask the user rather than assuming.
 
-If `performance.json` doesn't exist yet, say so and run `python sync.py` before continuing.
+If `performance.json` doesn't exist yet, say so and run `garmin sync` before continuing.
 
 **Weight is a suggestion, not a prescription in the file.** Garmin workout steps carry
 exercise/sets/reps/rest only — there's no weight field — so target loads belong in the
@@ -116,7 +121,7 @@ The user must provide:
 guess and don't ask blind. Run:**
 
 ```bash
-python coach.py --suggest
+garmin suggest
 ```
 
 It reports every group's last-trained date, session count and set count, then recommends a
@@ -132,7 +137,7 @@ Garmin yet still uses up recovery:
 
 ```bash
 # "a workout for Monday, given I might train core and shoulders tomorrow"
-python coach.py --suggest --as-of 2026-08-10 --planned core shoulders --planned-date 2026-08-07
+garmin suggest --as-of 2026-08-10 --planned core shoulders --planned-date 2026-08-07
 ```
 
 Work out the real dates before running it — don't pass "Monday". Without `--planned`, the tool has
@@ -236,7 +241,7 @@ Where:
 - `<slug>` = muscle groups lowercased, spaces→underscores (e.g. `chest_shoulders`)
 - `<N>` = next available integer (check existing files, never overwrite unless the user explicitly asks to replace a specific numbered file)
 
-Then run `python validate.py workouts/<filename>.py` yourself (via shell) to confirm it's clean
+Then run `garmin validate workouts/<filename>.py` yourself (via shell) to confirm it's clean
 before telling the user it's ready — don't just trust the reference table, actually check.
 
 ### Step 5 — Upload
@@ -252,7 +257,7 @@ Check whether `~/Projects/garmin-workouts/.garmin_session/` exists:
 Command to hand over:
 ```
 cd ~/Projects/garmin-workouts
-python upload.py workouts/<filename>.py
+garmin upload workouts/<filename>.py
 ```
 
 ---
@@ -294,7 +299,7 @@ rather than eyeballing it.
 
 ```python
 # <Workout Name> — <muscle groups> (session N)
-# Run: python upload.py workouts/<filename>.py
+# Run: garmin upload workouts/<filename>.py
 
 WORKOUT = {
     "name": "Chest & Shoulders 1",
@@ -335,7 +340,7 @@ package's source rather than trusting a hand-maintained table. Run it after writ
 workout file:
 
 ```
-python validate.py workouts/<filename>.py
+garmin validate workouts/<filename>.py
 ```
 
 `upload.py` also calls this automatically before pushing anything, so a bad name/category pair is

@@ -11,7 +11,9 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-HISTORY_PATH = Path(__file__).resolve().parent.parent / "history.json"
+from .paths import history_path
+
+HISTORY_PATH = history_path()
 
 
 def load() -> list:
