@@ -158,6 +158,34 @@ Aim for as little overlap between options as possible so the user gets a real ch
 exercise names that appear in the Exercise Reference table below — every entry there is verified
 against Garmin's real FIT SDK, so there's no risk of picking something that fails validation later.
 
+### Step 3b — Always link a demo for every exercise
+
+**The user does not want to go hunting for form videos.** So never present a bare exercise name.
+Once they pick an option — and whenever they ask about any single exercise — give each movement a
+one-click demo link, as a markdown link on the exercise name itself:
+
+```
+[Reverse Grip Barbell Row](https://www.youtube.com/results?search_query=reverse+grip+barbell+row+proper+form) 4×8
+```
+
+Build the URL from the exercise name: strip a leading underscore, replace remaining `_` with
+spaces, lowercase, URL-encode with `+`, append `+proper+form`. **Keep any digits** — Garmin writes
+`_30_DEGREE_LAT_PULLDOWN`, and dropping the 30 turns it into "degree lat pulldown", which searches
+for nothing useful. Correct result: `30+degree+lat+pulldown+proper+form`.
+
+Do this for anything unfamiliar or newly introduced, and for the whole list on request. For the
+three options in Step 3 keep the inline list readable — link there only when an option contains a
+movement the user has never been prescribed before (check `history.json`), and say why it's new.
+
+When the user asks about one specific exercise, also describe the movement in two or three lines —
+setup, the working range, and the single most common mistake — so the link is confirmation rather
+than the only source. Never claim to have watched a video or seen an image.
+
+**Do not try to render exercise images inline.** The chat widget and artifact sandboxes only permit
+a fixed CDN allowlist, so images from an exercise library are silently blocked; a page that looks
+broken is worse than a link that works. A local page with real images exists on the
+`exercise-previews` branch (`preview.py`) if the user ever asks for it back.
+
 ### Step 4 — Create the workout file
 
 Once the user confirms a choice, write the workout to:
