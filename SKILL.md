@@ -23,9 +23,13 @@ CLI entry points (these are what you invoke):
 - `validate.py` — checks a workout's exercises against the real Garmin FIT SDK
 - `login.py` — one-time interactive auth, caches a session so nothing else prompts
 
-Logic lives in the `garmin_workouts/` package (`store`, `judging`, `planning`, `workout`,
-`validation`, `history`, `client`), with every tuned threshold in `constants.py`.
-Tests are in `tests/` — run `python -m pytest` after changing anything in the package.
+The root scripts are argument parsing only. All logic lives in the `garmin_workouts/` package:
+`store` (owns `performance.json`), `sync` (fetches from Garmin), `judging` (verdicts),
+`planning` (muscle-group choice), `report` (terminal formatting), `workout`, `validation`,
+`history`, `client` (auth), and `constants` — which holds every tuned threshold.
+
+Change logic in the package, not in the root scripts. Tests are in `tests/` — run
+`python -m pytest` after touching anything in the package.
 
 **`progress.py` no longer exists** — it was folded into `python coach.py --prescribed`.
 
