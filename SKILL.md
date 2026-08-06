@@ -16,6 +16,19 @@ on a cable-assist machine are fine; push-ups are not — the gym has better opti
 
 The project lives at `~/Projects/garmin-workouts/`. Run every command from that directory.
 
+**Before anything else: make sure you can actually reach it.** This project almost always sits
+outside the current working directory, so file reads and shell commands against it fail with a
+sandbox/permission error until access is granted. Don't try to work around that error, and don't
+report it back as a dead end — request the directory:
+
+> Use the directory-access tool (`request_directory`) with path `~/Projects/garmin-workouts`,
+> then continue once the user approves.
+
+Ask for the **project root**, not an individual file — every command needs sibling files
+(`performance.json`, `history.json`, `workouts/`, the `garmin_workouts/` package), so per-file
+access just fails again one step later. If access is refused, say plainly that the skill can't
+run without it rather than pretending to have data.
+
 CLI entry points (these are what you invoke):
 - `sync.py` — pulls **completed** sessions down from Garmin into `performance.json` (actual reps and weight)
 - `coach.py` — verdicts per exercise; `--suggest`, `--brief`, `--muscles`, `--prescribed`
@@ -477,6 +490,18 @@ whatever the most recent workout *file* for this slug used.
 ## Troubleshooting — known issues and their fixes
 
 These are all real failures already hit and diagnosed. Check here first.
+
+### "Outside the sandbox" / permission denied on the project files
+Reading `performance.json`, `history.json` or anything else under `~/Projects/garmin-workouts/`
+fails when that folder is outside the current working directory — which it usually is.
+
+**Fix:** request access to the project root with the directory-access tool
+(`request_directory`, path `~/Projects/garmin-workouts`), then retry. This is a one-time approval
+per session, not something to code around.
+
+Do **not**: guess at the data, fall back to generic programming, copy files elsewhere, or tell the
+user the file is missing — it exists, it's just not reachable yet. `performance.json` is also
+gitignored, so it will never appear via a git remote; the local folder is the only source.
 
 ### Exercise-name gotchas (caused a silent wrong-exercise bug)
 Garmin's naming does not match gym vernacular. Confirmed traps:

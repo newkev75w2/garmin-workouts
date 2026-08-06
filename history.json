@@ -133,5 +133,69 @@
         "rest_seconds": 45
       }
     ]
+  },
+  {
+    "date": "2026-08-06T21:09:00+00:00",
+    "file": "workouts/shoulders_core_1.py",
+    "name": "Shoulders & Core 1",
+    "description": "Shoulder volume with two earned load jumps, conservative core rebuild. ~48 min.",
+    "exercises": [
+      {
+        "name": "SEATED_BARBELL_SHOULDER_PRESS",
+        "category": "SHOULDER_PRESS",
+        "sets": 4,
+        "reps": 8,
+        "rest_seconds": 90
+      },
+      {
+        "name": "DUMBBELL_PUSH_PRESS",
+        "category": "SHOULDER_PRESS",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 90
+      },
+      {
+        "name": "BARBELL_SHRUG",
+        "category": "SHRUG",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "DUMBBELL_LATERAL_RAISE",
+        "category": "LATERAL_RAISE",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "SEATED_REAR_LATERAL_RAISE",
+        "category": "LATERAL_RAISE",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "CABLE_CRUNCH",
+        "category": "CRUNCH",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "HANGING_LEG_RAISE",
+        "category": "LEG_RAISE",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "PLANK",
+        "category": "PLANK",
+        "sets": 3,
+        "seconds": 45,
+        "rest_seconds": 45
+      }
+    ]
   }
 ]
