@@ -16,6 +16,7 @@ garmin_workouts/judging.py; the thresholds live in garmin_workouts/constants.py.
 from __future__ import annotations
 
 import argparse
+from datetime import date, timedelta
 
 from garmin_workouts import judging, report
 
@@ -32,6 +33,12 @@ def build_parser() -> argparse.ArgumentParser:
                         help="limit to these muscle groups, e.g. --muscles chest shoulders")
     parser.add_argument("--prescribed", nargs="?", const="", metavar="EXERCISE",
                         help="show what was programmed over time instead of performed")
+    parser.add_argument("--as-of", metavar="YYYY-MM-DD", dest="as_of",
+                        help="plan for a future day, e.g. --suggest --as-of 2026-08-10")
+    parser.add_argument("--planned", nargs="+", metavar="GROUP",
+                        help="muscle groups you intend to train before then but haven't yet")
+    parser.add_argument("--planned-date", metavar="YYYY-MM-DD", dest="planned_date",
+                        help="when that planned session happens (defaults to tomorrow)")
     return parser
 
 
@@ -39,7 +46,13 @@ def main() -> None:
     args = build_parser().parse_args()
 
     if args.suggest:
-        report.print_suggestion()
+        as_of = date.fromisoformat(args.as_of) if args.as_of else None
+        planned_date = (
+            date.fromisoformat(args.planned_date)
+            if args.planned_date
+            else (date.today() + timedelta(days=1) if args.planned else None)
+        )
+        report.print_suggestion(as_of, args.planned, planned_date)
         return
 
     if args.prescribed is not None:

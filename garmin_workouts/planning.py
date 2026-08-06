@@ -9,7 +9,7 @@ from collections import defaultdict
 from .constants import CATEGORY_PRIMARY_GROUP, GROUP_AFFINITY, MIN_RECOVERY_DAYS
 from .store import days_since, load_store
 
-def group_load(store: dict) -> dict:
+def group_load(store: dict, as_of=None) -> dict:
     """Per muscle group: when it was last trained, how often, and how much."""
     stats = defaultdict(lambda: {"last": "", "sets": 0, "sessions": set()})
     for act in store.get("activities", {}).values():
@@ -26,7 +26,7 @@ def group_load(store: dict) -> dict:
     return {
         name: {
             "last": g["last"],
-            "days_ago": days_since(g["last"]) if g["last"] else 999,
+            "days_ago": days_since(g["last"], as_of) if g["last"] else 999,
             "sets": g["sets"],
             "sessions": len(g["sessions"]),
         }
@@ -34,7 +34,7 @@ def group_load(store: dict) -> dict:
     }
 
 
-def suggest_focus(store: dict | None = None) -> dict:
+def suggest_focus(store=None, as_of=None, planned=None, planned_date=None) -> dict:
     """
     Recommend which muscle groups to train next.
 
@@ -45,7 +45,19 @@ def suggest_focus(store: dict | None = None) -> dict:
     workout rather than two unrelated halves.
     """
     store = store or load_store()
-    loads = group_load(store)
+    loads = group_load(store, as_of)
+
+    # A session the user says they intend to do has not reached Garmin yet, but
+    # it still consumes recovery. Without this, planning Monday around a Friday
+    # session would happily prescribe the same muscles twice.
+    for group in planned or []:
+        entry = loads.setdefault(
+            group, {"last": "", "days_ago": 999, "sets": 0, "sessions": 0}
+        )
+        if planned_date:
+            entry["last"] = planned_date.isoformat()
+            entry["days_ago"] = days_since(entry["last"], as_of)
+            entry["planned"] = True
     if not loads:
         return {"primary": None, "partner": None, "reason": "no data yet", "groups": {}}
 

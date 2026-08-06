@@ -177,8 +177,16 @@ def unlabelled_work(store: dict) -> list:
     return out
 
 
-def days_since(iso_date: str) -> int:
+def days_since(iso_date: str, as_of: date | None = None) -> int:
+    """
+    Days between a session and the day being planned for.
+
+    `as_of` exists because "what should I train on Monday?" is a different
+    question from "what should I train now" — by Monday, groups that are inside
+    the recovery window today will have cleared it. Defaults to today.
+    """
     try:
-        return (date.today() - datetime.strptime(iso_date, "%Y-%m-%d").date()).days
+        reference = as_of or date.today()
+        return (reference - datetime.strptime(iso_date, "%Y-%m-%d").date()).days
     except ValueError:
         return 0

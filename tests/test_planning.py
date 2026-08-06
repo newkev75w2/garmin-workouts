@@ -112,3 +112,36 @@ class TestPartnerRanking:
         store = trained([(11, "CORE", 3), (0, "ROW", 40), (5, "CURL", 40)])
         result = planning.suggest_focus(store)
         assert result["partner"] == "biceps"
+
+
+class TestPlanningAhead:
+    def test_as_of_lets_a_group_recover_by_the_planned_day(self):
+        """
+        "What should I train on Monday?" is a different question from "what now" —
+        groups inside the recovery window today have cleared it by then.
+        """
+        from datetime import date, timedelta
+
+        store = trained([(0, "SQUAT", 40), (0, "BENCH_PRESS", 10)])
+        today = planning.suggest_focus(store)
+        assert today["primary"] is None, "everything trained today means rest"
+
+        later = planning.suggest_focus(store, as_of=date.today() + timedelta(days=3))
+        assert later["primary"] == "chest", "three days on, chest has recovered"
+
+    def test_a_planned_session_consumes_recovery(self):
+        """
+        A session the user intends to do has not reached Garmin yet, but it still
+        has to count — otherwise planning Monday around a Friday session happily
+        prescribes the same muscles twice.
+        """
+        from datetime import date
+
+        store = trained([(10, "CORE", 3), (10, "BENCH_PRESS", 40)])
+        planned_day = date.today()
+        result = planning.suggest_focus(
+            store, as_of=planned_day, planned=["core"], planned_date=planned_day
+        )
+        assert result["groups"]["core"]["days_ago"] == 0
+        assert not result["groups"]["core"]["recovered"]
+        assert result["primary"] != "core"

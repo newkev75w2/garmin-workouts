@@ -1,10 +1,17 @@
 ---
 name: garmin-workout
 description: >
-  Use this skill to build a custom strength workout for Garmin. Trigger on: "create a garmin
-  workout", "build me a gym workout for garmin", "I want a new lifting session on my garmin",
-  "add a workout to my garmin", "make me a push/pull/leg day for garmin", or any request to
-  generate a structured weight-training workout for a Garmin watch or Garmin Connect.
+  Plan gym and strength training from the user's own Garmin history — which sits locally in
+  ~/Projects/garmin-workouts along with every completed session, weight and rep they have
+  logged. Use this skill whenever the user asks to create, design, build or plan a workout,
+  lifting session, gym session, training day, push/pull/leg day or programme — including for
+  a named or future day ("design me a workout for Monday", "something for tomorrow") and
+  WHETHER OR NOT THEY SAY THE WORD GARMIN. Also use it when they ask what to train ("what
+  muscles should I train tomorrow?", "what should I hit today?", "am I due a rest day?"),
+  when they ask how they are progressing on a lift or whether to add weight, and when they
+  mention uploading or syncing a workout to their watch. Because their real training data is
+  on disk, never answer these from general knowledge and never ask what programme, split or
+  goal they follow — read their actual history first and build from it.
 ---
 
 # Garmin Strength Workout Builder
@@ -119,9 +126,26 @@ the most-trained group). Lead with that recommendation and the reason, e.g.:
 > "You haven't trained core in 10 days — 16 sets logged against 120 for legs. Suggest core +
 > triceps, since everything else is still inside 48h. Want that, or something else?"
 
+**If they name a future day, or mention a session they plan to do first, pass both in.**
+Recovery is measured against the day being trained, not today, and a session that hasn't reached
+Garmin yet still uses up recovery:
+
+```bash
+# "a workout for Monday, given I might train core and shoulders tomorrow"
+python coach.py --suggest --as-of 2026-08-10 --planned core shoulders --planned-date 2026-08-07
+```
+
+Work out the real dates before running it — don't pass "Monday". Without `--planned`, the tool has
+no idea about the intended session and will happily prescribe the same muscles twice in a row.
+
 Respect what it says:
 - **`take a rest day`** — everything trained inside 48h. Say so rather than programming
   another session on top; offer a light/mobility option only if they push.
+- **Volume deficit can outvote good programming.** A badly under-trained group keeps winning even
+  right after it was trained, because deficit dominates the score. If the tool suggests repeating
+  the group they just did while a major group (chest/back/legs) sits several days rested, say so
+  and offer the major group instead — usually as the `note:` line already suggests. Don't just
+  read the tool's output back.
 - **The `note:` line** — when it fires, the pairing is two small groups and can't honestly
   fill 45–50 min without junk volume. Pass that on, along with the alternative it names.
 

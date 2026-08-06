@@ -13,13 +13,16 @@ from collections import defaultdict
 from . import history, planning, store
 
 
-def print_suggestion() -> None:
-    s = planning.suggest_focus()
+def print_suggestion(as_of=None, planned=None, planned_date=None) -> None:
+    s = planning.suggest_focus(as_of=as_of, planned=planned, planned_date=planned_date)
     groups = sorted(s["groups"].items(), key=lambda kv: kv[1]["days_ago"], reverse=True)
 
-    print(f"\n{'group':<11}{'last':<12}{'days':>5}{'sessions':>10}{'sets':>7}  status")
+    when = f" (as of {as_of})" if as_of else ""
+    print(f"\n{'group':<11}{'last':<12}{'days':>5}{'sessions':>10}{'sets':>7}  status{when}")
     for name, g in groups:
         status = "recovered" if g["recovered"] else "needs rest"
+        if g.get("planned"):
+            status += " (planned)"
         print(
             f"{name:<11}{g['last'] or '-':<12}{g['days_ago']:>5}"
             f"{g['sessions']:>10}{g['sets']:>7}  {status}"
