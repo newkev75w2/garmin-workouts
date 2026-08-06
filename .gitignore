@@ -1,6 +1,11 @@
 # Garmin session tokens - never commit these
 .garmin_session/
 
+# Your actual lifted weights/reps pulled from Garmin. Personal training data —
+# kept local by default since this repo is public. Delete this line if you'd
+# rather version it.
+performance.json
+
 # Python
 __pycache__/
 *.pyc

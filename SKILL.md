@@ -21,6 +21,8 @@ The project lives at `~/Projects/garmin-workouts/` and contains:
 - `login.py` — one-time interactive auth, caches a session so upload.py never prompts again
 - `history.py` / `history.json` — logs every uploaded session (exercises, sets, reps, rest)
 - `progress.py` — shows how prescribed volume for each exercise has changed over time
+- `sync.py` / `performance.json` — pulls **completed** sessions back down from Garmin (actual reps and weight lifted)
+- `coach.py` — judges that performance and says what to do next per exercise
 - `requirements.txt` — `pip install -r requirements.txt`
 
 **Read the Troubleshooting section at the bottom before debugging anything environment-related.**
@@ -29,6 +31,46 @@ It documents real failures already hit and solved — don't rediscover them.
 ---
 
 ## Workflow
+
+### Step 0 — Pull performance and let it drive the programming
+
+**Always do this before proposing exercises.** New workouts are built on what the user
+actually lifted, not on generic templates.
+
+```bash
+cd ~/Projects/garmin-workouts
+python sync.py                                   # refresh from Garmin (idempotent)
+python coach.py --brief --muscles chest shoulders  # verdicts for today's muscle groups
+```
+
+Each line comes back as:
+
+```
+BARBELL_BENCH_PRESS: 70.0kg x6/6 (2026-07-27, 4 sessions) [progressing] -> add 5.0kg -> 75.0kg x 6
+```
+
+Apply the verdict directly when choosing exercises and prescribing reps:
+
+| Verdict | What it means | What to program |
+|---|---|---|
+| `ready` | Hit the rep target on every working set | Keep the exercise, take the suggested load jump, reps back to the bottom of the range |
+| `progressing` | Load or reps trending up | Keep it, keep the progression going |
+| `holding` | Target not hit on all sets yet | Keep it, same load, don't add volume |
+| `stalled` | Same weight 3+ sessions, no rep gain | **Swap the variation** (e.g. barbell RDL → dumbbell RDL) or drop to a lower rep range |
+| `regressed` | Meaningful drop vs the last clean session | Program it lighter and rebuild; don't pile on volume |
+| `stale` | Not trained in 21+ days | Good candidate to bring back, but restart conservatively |
+| `check-data` | The logged number is not trustworthy | **Never progress off this.** Mention it and ask what they actually lifted |
+| `baseline` | Only one clean session | Repeat the same prescription to establish a trend |
+
+Mention the two or three findings that actually shaped the workout — especially anything
+`stalled` or `check-data` — so the user sees why it differs from last time. Don't dump the
+whole table at them.
+
+If `performance.json` doesn't exist yet, say so and run `python sync.py` before continuing.
+
+**Weight is a suggestion, not a prescription in the file.** Garmin workout steps carry
+exercise/sets/reps/rest only — there's no weight field — so target loads belong in the
+conversation and in the workout `description`, never as a field in the exercise dict.
 
 ### Step 1 — Gather requirements
 

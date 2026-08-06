@@ -13,17 +13,12 @@ Every time after:
 from __future__ import annotations
 
 import importlib.util
-import inspect
-import os
 import sys
 from pathlib import Path
 
-from garminconnect import Garmin
-
 import history
 import validate
-
-TOKENSTORE = str(Path(__file__).parent / ".garmin_session")
+from garmin_client import get_client
 
 
 def load_workout(path: str) -> dict:
@@ -101,35 +96,6 @@ def estimate_duration(workout: dict) -> int:
         work_secs = ex.get("seconds", 45)  # ~45s to complete a set of reps
         total_seconds += ex["sets"] * (work_secs + ex["rest_seconds"])
     return round(total_seconds / 60)
-
-
-def _make_client(email=None, password=None) -> Garmin:
-    """
-    Build a Garmin client, passing prompt_mfa only if the installed
-    garminconnect version actually supports it (0.2.x does not).
-    """
-    if "prompt_mfa" in inspect.signature(Garmin.__init__).parameters:
-        return Garmin(email, password, prompt_mfa=lambda: input("MFA code: "))
-    return Garmin(email, password)
-
-
-def get_client() -> Garmin:
-    """
-    Reuses the cached session written by login.py. Never prompts when running
-    headlessly — it just tells you to run `python login.py` first.
-    """
-    client = _make_client(os.getenv("GARMIN_EMAIL"), os.getenv("GARMIN_PASSWORD"))
-    try:
-        client.login(TOKENSTORE)
-        return client
-    except Exception as exc:
-        print(f"Could not use cached session at {TOKENSTORE}: {exc}")
-
-    print(
-        "\nNo valid cached Garmin session found.\n"
-        "Run `python login.py` once yourself, then re-run this upload."
-    )
-    sys.exit(1)
 
 
 def main():

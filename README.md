@@ -13,6 +13,8 @@ The skill lives in [`SKILL.md`](SKILL.md) and is packaged as a `.skill` file
 that gets loaded into Claude Code / Claude Desktop. It triggers whenever you
 ask to create a Garmin gym/strength workout.
 
+0. **Claude pulls your recent performance first** (`sync.py` + `coach.py`) and
+   programs off what you actually lifted — see [Closing the loop](#closing-the-loop).
 1. **You provide at least 2 muscle groups** (e.g. "chest and shoulders").
    Duration defaults to 45–50 minutes unless you ask for something else.
 2. **Claude offers 3 options**, each covering a genuinely different set of
@@ -33,6 +35,47 @@ first, and **per-exercise rest times** (never a single blanket rest value) —
 compounds top out at 90s, moderate lifts 75s, isolation 60s, high-rep
 finishers 45s.
 
+## Closing the loop
+
+Uploading a workout is only half of it. `sync.py` pulls **completed** sessions
+back down from Garmin Connect — actual reps and weight, per set — and `coach.py`
+judges them, so the next workout is built on real numbers instead of guesswork.
+
+```bash
+python sync.py     # pull completed sessions into performance.json
+python coach.py    # verdict + next step for every exercise
+python coach.py --brief --muscles chest shoulders   # what the skill reads
+```
+
+Each exercise gets one of: `progressing`, `ready` (earned a load jump),
+`holding`, `stalled` (same weight 3+ sessions — change the variation),
+`regressed`, `stale` (untrained 21+ days), `baseline`, or `check-data`.
+
+### It assumes the log is messy, because it is
+
+Weights are typed in by hand on the watch, and that record has real errors in
+it. From a 20-session log: a leg press reading `120, 16, 130, 150, 200, 140` kg;
+a 431 kg push-up; dips logged as `9, 76, 72, 19` kg because Garmin sometimes
+stores bodyweight and sometimes the added or assist load.
+
+Taken at face value that data calls about a fifth of all exercises "regressed"
+and would have you cutting load you never lost. So before judging anything,
+`coach.py`:
+
+- excludes sessions whose top weight falls outside 60–180% of that exercise's
+  own median, and anything past an absolute plausibility ceiling
+- ignores sessions where most sets were logged without a weight
+- judges `BODY_WEIGHT_*` movements on reps alone
+- requires a drop to clear **both** 10% and one load increment before calling it
+  a regression, so a single pin on a cable stack isn't read as decline
+
+Suspect figures aren't silently dropped — they surface as `check-data` with the
+reason, and never feed progression. Everything is compared against an exercise's
+own history, never across exercises.
+
+`performance.json` is gitignored by default, since it's your actual training
+data and this repo is public.
+
 ## Repo layout
 
 | File | Purpose |
@@ -43,6 +86,9 @@ finishers 45s.
 | `validate.py` | Checks every exercise name/category in a workout file against Garmin's official FIT SDK enum list, so a typo'd exercise is caught before upload, not after. |
 | `history.py` | Shared helpers for reading/writing `history.json` — what's been uploaded and when. |
 | `progress.py` | Shows how prescribed sets/reps/rest for an exercise have changed across logged sessions. |
+| `sync.py` | Pulls completed sessions from Garmin into `performance.json` — actual reps and weight per set. Idempotent. |
+| `coach.py` | Judges that performance and suggests the next load/rep target, with guards against mis-logged weights. |
+| `garmin_client.py` | Shared authenticated-client setup used by both `upload.py` and `sync.py`. |
 | `workouts/` | Generated workout files, one per session. |
 
 ## Setup
