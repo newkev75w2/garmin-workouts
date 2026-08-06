@@ -84,8 +84,28 @@ The user must provide:
 - **At least 2 muscle groups** (e.g. chest + shoulders, back + biceps, quads + hamstrings)
 - Duration if they want something other than the 45–50 min default
 
-If anything is missing, ask before proceeding. Example prompt:
-> "Which muscle groups? (e.g. chest & shoulders, back & biceps) — I'll default to ~45–50 min unless you say otherwise."
+**If they haven't said which muscle groups — or they ask what they should train — don't
+guess and don't ask blind. Run:**
+
+```bash
+python coach.py --suggest
+```
+
+It reports every group's last-trained date, session count and set count, then recommends a
+pairing based on recovery (nothing trained inside 48h) and volume deficit (sets relative to
+the most-trained group). Lead with that recommendation and the reason, e.g.:
+
+> "You haven't trained core in 10 days — 16 sets logged against 120 for legs. Suggest core +
+> triceps, since everything else is still inside 48h. Want that, or something else?"
+
+Respect what it says:
+- **`take a rest day`** — everything trained inside 48h. Say so rather than programming
+  another session on top; offer a light/mobility option only if they push.
+- **The `note:` line** — when it fires, the pairing is two small groups and can't honestly
+  fill 45–50 min without junk volume. Pass that on, along with the alternative it names.
+
+The user can always override — if they ask for chest the day after chest, build it, but tell
+them what the data says first.
 
 ### Step 2 — Check history before proposing options
 

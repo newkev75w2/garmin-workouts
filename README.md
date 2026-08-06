@@ -42,10 +42,30 @@ back down from Garmin Connect — actual reps and weight, per set — and `coach
 judges them, so the next workout is built on real numbers instead of guesswork.
 
 ```bash
-python sync.py     # pull completed sessions into performance.json
-python coach.py    # verdict + next step for every exercise
+python sync.py             # pull completed sessions into performance.json
+python coach.py            # verdict + next step for every exercise
+python coach.py --suggest  # which muscle groups to train next, and why
 python coach.py --brief --muscles chest shoulders   # what the skill reads
 ```
+
+`--suggest` answers "what should I train today?" from the log rather than habit —
+it ranks every group by recovery (nothing trained inside 48h is offered) and by
+volume deficit against your most-trained group:
+
+```
+group      last         days  sessions   sets  status
+core       2026-07-27     10         3     16  recovered
+triceps    2026-08-03      3         6     47  recovered
+legs       2026-08-06      0         9    120  needs rest
+
+Suggested next session: core + triceps
+  why: core has 16 sets logged vs 120 for your most-trained group, last hit 10 days ago
+  note: both are small groups — fine as a short accessory session, or wait a day
+        and pair core with chest (rested 1d)
+```
+
+It will tell you to take a rest day if everything is inside 48h, and flags when a
+pairing is two small groups that can't fill a session without junk volume.
 
 Each exercise gets one of: `progressing`, `ready` (earned a load jump),
 `holding`, `stalled` (same weight 3+ sessions — change the variation),

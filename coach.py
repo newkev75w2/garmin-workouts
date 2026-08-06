@@ -83,6 +83,35 @@ ISOLATION_CATEGORIES = {
     "CRUNCH", "CALF_RAISE", "SHRUG",
 }
 
+# For --suggest, each category maps to exactly one group. MUSCLE_CATEGORIES
+# below deliberately overlaps (a shrug is both back and shoulders work), which
+# is fine for filtering but would double-count volume when comparing groups.
+CATEGORY_PRIMARY_GROUP = {
+    "BENCH_PRESS": "chest", "FLYE": "chest", "PUSH_UP": "chest",
+    "ROW": "back", "PULL_UP": "back", "PULLDOWN": "back", "SHRUG": "back",
+    "SHOULDER_PRESS": "shoulders", "LATERAL_RAISE": "shoulders",
+    "CURL": "biceps",
+    "TRICEPS_EXTENSION": "triceps",
+    "SQUAT": "legs", "DEADLIFT": "legs", "LUNGE": "legs",
+    "LEG_CURL": "legs", "CALF_RAISE": "legs", "HIP_RAISE": "legs",
+    "CORE": "core", "CRUNCH": "core", "PLANK": "core", "LEG_RAISE": "core",
+}
+
+# Muscles need roughly 48h before being trained hard again, so anything
+# trained more recently than this is not offered as a target.
+MIN_RECOVERY_DAYS = 2
+
+# Which groups pair sensibly in one session, best partner first.
+GROUP_AFFINITY = {
+    "chest": ["triceps", "shoulders"],
+    "back": ["biceps", "core"],
+    "shoulders": ["triceps", "chest", "core"],
+    "biceps": ["back", "core"],
+    "triceps": ["chest", "shoulders"],
+    "legs": ["core"],
+    "core": ["back", "shoulders"],
+}
+
 # Used by --muscles so the skill can ask "what have I been doing for chest?"
 MUSCLE_CATEGORIES = {
     "chest": {"BENCH_PRESS", "FLYE", "PUSH_UP"},
@@ -374,6 +403,104 @@ def judge(name: str, sessions: list, targets: dict) -> dict:
     }
 
 
+def group_load(store: dict) -> dict:
+    """Per muscle group: when it was last trained, how often, and how much."""
+    stats = defaultdict(lambda: {"last": "", "sets": 0, "sessions": set()})
+    for act in store.get("activities", {}).values():
+        for s in act.get("sets", []):
+            group = CATEGORY_PRIMARY_GROUP.get(s.get("category"))
+            if not group:
+                continue
+            g = stats[group]
+            g["sets"] += 1
+            g["sessions"].add(act["date"])
+            if act["date"] > g["last"]:
+                g["last"] = act["date"]
+
+    return {
+        name: {
+            "last": g["last"],
+            "days_ago": days_since(g["last"]) if g["last"] else 999,
+            "sets": g["sets"],
+            "sessions": len(g["sessions"]),
+        }
+        for name, g in stats.items()
+    }
+
+
+def suggest_focus(store: dict | None = None) -> dict:
+    """
+    Recommend which muscle groups to train next.
+
+    Two things decide it: recovery (a group trained inside MIN_RECOVERY_DAYS is
+    off the table regardless of how neglected it is) and volume deficit (how
+    little that group has had relative to the most-trained one). The pairing
+    then comes from GROUP_AFFINITY so the session still makes sense as a
+    workout rather than two unrelated halves.
+    """
+    store = store or load_store()
+    loads = group_load(store)
+    if not loads:
+        return {"primary": None, "partner": None, "reason": "no data yet", "groups": {}}
+
+    busiest = max(g["sets"] for g in loads.values()) or 1
+    for name, g in loads.items():
+        g["deficit"] = 1 - (g["sets"] / busiest)
+        g["recovered"] = g["days_ago"] >= MIN_RECOVERY_DAYS
+        # Deficit drives the choice; days rested breaks ties in favour of
+        # whatever has been sitting longest.
+        g["score"] = round(g["deficit"] + min(g["days_ago"], 14) / 28, 3)
+
+    ready = {n: g for n, g in loads.items() if g["recovered"]}
+    if not ready:
+        return {
+            "primary": None,
+            "partner": None,
+            "reason": "everything was trained in the last 48h — take a rest day",
+            "groups": loads,
+        }
+
+    primary = max(ready, key=lambda n: ready[n]["score"])
+    partner = next(
+        (p for p in GROUP_AFFINITY.get(primary, []) if p in ready and p != primary),
+        None,
+    )
+    if partner is None:
+        remaining = {n: g for n, g in ready.items() if n != primary}
+        partner = max(remaining, key=lambda n: remaining[n]["score"], default=None)
+
+    p = loads[primary]
+    reason = (
+        f"{primary} has {p['sets']} sets logged vs {busiest} for your most-trained "
+        f"group, and was last hit {p['days_ago']} days ago"
+    )
+
+    # Chest/back/legs carry a session. A pairing of only small groups can't fill
+    # 45-50 minutes without junk volume, so flag it rather than pretend it's fine.
+    major = {"chest", "back", "legs"}
+    caveat = None
+    if not ({primary, partner} & major):
+        # The best major group to wait for is the one most rested and most
+        # under-trained — same score used everywhere else, not the one trained
+        # most recently.
+        candidates = {n: g for n, g in loads.items() if n in major}
+        best = max(candidates, key=lambda n: candidates[n]["score"], default=None)
+        if best:
+            caveat = (
+                f"both are small groups — fine as a short accessory session, or "
+                f"wait a day and pair {primary} with {best} "
+                f"(rested {candidates[best]['days_ago']}d)"
+            )
+
+    return {
+        "primary": primary,
+        "partner": partner,
+        "reason": reason,
+        "caveat": caveat,
+        "groups": loads,
+    }
+
+
 def analyze(muscles: list | None = None) -> list:
     """Public entry point — also what the skill calls to inform new workouts."""
     store = load_store()
@@ -400,6 +527,29 @@ def main():
     brief = "--brief" in args
     if brief:
         args.remove("--brief")
+
+    if "--suggest" in args:
+        s = suggest_focus()
+        groups = sorted(
+            s["groups"].items(), key=lambda kv: kv[1]["days_ago"], reverse=True
+        )
+        print(f"\n{'group':<11}{'last':<12}{'days':>5}{'sessions':>10}{'sets':>7}  status")
+        for name, g in groups:
+            status = "recovered" if g["recovered"] else "needs rest"
+            print(
+                f"{name:<11}{g['last'] or '-':<12}{g['days_ago']:>5}"
+                f"{g['sessions']:>10}{g['sets']:>7}  {status}"
+            )
+        print()
+        if s["primary"]:
+            pair = f"{s['primary']} + {s['partner']}" if s["partner"] else s["primary"]
+            print(f"Suggested next session: {pair}")
+            print(f"  why: {s['reason']}")
+            if s.get("caveat"):
+                print(f"  note: {s['caveat']}")
+        else:
+            print(s["reason"])
+        return
 
     muscles = None
     if "--muscles" in args:
