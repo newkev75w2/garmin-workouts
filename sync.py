@@ -22,13 +22,13 @@ Notes on the data Garmin gives back:
 
 from __future__ import annotations
 
+import argparse
 import json
-import sys
 from pathlib import Path
 
-from garmin_client import get_client
+from garmin_workouts.client import get_client
 
-STORE_PATH = Path(__file__).parent / "performance.json"
+STORE_PATH = Path(__file__).resolve().parent / "performance.json"
 
 
 def _load() -> dict:
@@ -116,8 +116,14 @@ def sync(limit: int = 30) -> dict:
 
 
 def main():
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 30
-    sync(limit)
+    parser = argparse.ArgumentParser(
+        description="Pull completed strength sessions from Garmin Connect."
+    )
+    parser.add_argument(
+        "limit", nargs="?", type=int, default=30,
+        help="how many recent activities to scan (default 30)",
+    )
+    sync(parser.parse_args().limit)
 
 
 if __name__ == "__main__":

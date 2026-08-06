@@ -11,10 +11,11 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-HISTORY_PATH = Path(__file__).parent / "history.json"
+HISTORY_PATH = Path(__file__).resolve().parent.parent / "history.json"
 
 
-def _load() -> list:
+def load() -> list:
+    """Every uploaded session, oldest first."""
     if not HISTORY_PATH.exists():
         return []
     return json.loads(HISTORY_PATH.read_text(encoding="utf-8"))
@@ -25,7 +26,7 @@ def _save(entries: list) -> None:
 
 
 def log_session(workout_file: str, workout: dict) -> None:
-    entries = _load()
+    entries = load()
     entries.append(
         {
             "date": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -45,6 +46,6 @@ def last_session_for(slug: str):
     None if nothing has been logged for that slug yet.
     """
     matches = [
-        e for e in _load() if Path(e["file"]).stem.rsplit("_", 1)[0] == slug
+        e for e in load() if Path(e["file"]).stem.rsplit("_", 1)[0] == slug
     ]
     return matches[-1] if matches else None

@@ -15,7 +15,7 @@ from pathlib import Path
 
 from garminconnect import Garmin
 
-TOKENSTORE = str(Path(__file__).parent / ".garmin_session")
+TOKENSTORE = str(Path(__file__).resolve().parent.parent / ".garmin_session")
 
 
 def _make_client(email=None, password=None) -> Garmin:

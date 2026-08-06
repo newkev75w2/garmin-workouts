@@ -14,16 +14,20 @@ All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbe
 Default duration: **45–50 minutes**. Bodyweight exercises only if they genuinely fit (dips, pull-ups
 on a cable-assist machine are fine; push-ups are not — the gym has better options).
 
-The project lives at `~/Projects/garmin-workouts/` and contains:
-- `workouts/*.py` — generated workout files
+The project lives at `~/Projects/garmin-workouts/`. Run every command from that directory.
+
+CLI entry points (these are what you invoke):
+- `sync.py` — pulls **completed** sessions down from Garmin into `performance.json` (actual reps and weight)
+- `coach.py` — verdicts per exercise; `--suggest`, `--brief`, `--muscles`, `--prescribed`
+- `upload.py` — validates then pushes a workout; `--dry-run` checks without uploading
 - `validate.py` — checks a workout's exercises against the real Garmin FIT SDK
-- `upload.py` — validates, then pushes a workout to Garmin Connect
-- `login.py` — one-time interactive auth, caches a session so upload.py never prompts again
-- `history.py` / `history.json` — logs every uploaded session (exercises, sets, reps, rest)
-- `progress.py` — shows how prescribed volume for each exercise has changed over time
-- `sync.py` / `performance.json` — pulls **completed** sessions back down from Garmin (actual reps and weight lifted)
-- `coach.py` — judges that performance and says what to do next per exercise
-- `requirements.txt` — `pip install -r requirements.txt`
+- `login.py` — one-time interactive auth, caches a session so nothing else prompts
+
+Logic lives in the `garmin_workouts/` package (`store`, `judging`, `planning`, `workout`,
+`validation`, `history`, `client`), with every tuned threshold in `constants.py`.
+Tests are in `tests/` — run `python -m pytest` after changing anything in the package.
+
+**`progress.py` no longer exists** — it was folded into `python coach.py --prescribed`.
 
 **Read the Troubleshooting section at the bottom before debugging anything environment-related.**
 It documents real failures already hit and solved — don't rediscover them.

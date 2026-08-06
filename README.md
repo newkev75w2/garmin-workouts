@@ -98,18 +98,44 @@ data and this repo is public.
 
 ## Repo layout
 
+Command-line entry points live at the root; the logic they call sits in the
+`garmin_workouts/` package, so it can be tested without going near the network.
+
 | File | Purpose |
 |---|---|
 | `SKILL.md` | The skill definition Claude reads — workflow, exercise reference table, rest-time/duration rules, coach programming guidelines. |
 | `login.py` | One-time interactive login. Caches a session to `.garmin_session/` (git-ignored) so you don't re-enter credentials every upload. |
-| `upload.py` | Loads a workout file, validates it, converts it to Garmin's workout JSON schema, and pushes it via the `garminconnect`/`garth` API. Logs the session to `history.json` on success. |
-| `validate.py` | Checks every exercise name/category in a workout file against Garmin's official FIT SDK enum list, so a typo'd exercise is caught before upload, not after. |
-| `history.py` | Shared helpers for reading/writing `history.json` — what's been uploaded and when. |
-| `progress.py` | Shows how prescribed sets/reps/rest for an exercise have changed across logged sessions. |
-| `sync.py` | Pulls completed sessions from Garmin into `performance.json` — actual reps and weight per set. Idempotent. |
-| `coach.py` | Judges that performance and suggests the next load/rep target, with guards against mis-logged weights. |
-| `garmin_client.py` | Shared authenticated-client setup used by both `upload.py` and `sync.py`. |
+| `upload.py` | CLI: validate a workout and push it to Garmin Connect (`--dry-run` to check without uploading). |
+| `sync.py` | CLI: pull completed sessions into `performance.json` — actual reps and weight per set. Idempotent. |
+| `coach.py` | CLI: verdicts, `--suggest` muscle groups, `--brief` for the skill, `--prescribed` for programmed history. |
+| `validate.py` | CLI: check a workout's exercises against the Garmin FIT SDK enum list. |
+| `garmin_workouts/constants.py` | Every tuned threshold and lookup table, in one documented place. |
+| `garmin_workouts/store.py` | Loads synced sessions, shapes them per exercise, and flags what can't be trusted. |
+| `garmin_workouts/judging.py` | Turns one exercise's history into a verdict and a next step. |
+| `garmin_workouts/planning.py` | Picks which muscle groups to train next, from recovery and volume. |
+| `garmin_workouts/workout.py` | Loads a workout file and builds Garmin's workout JSON payload. |
+| `garmin_workouts/validation.py` | FIT SDK exercise-name validation. |
+| `garmin_workouts/history.py` | Reading/writing `history.json` — what's been uploaded and when. |
+| `garmin_workouts/client.py` | Shared authenticated-client setup. |
+| `tests/` | Synthetic-fixture tests pinning the analysis guards. |
 | `workouts/` | Generated workout files, one per session. |
+
+## Tests
+
+```bash
+pip install pytest
+python -m pytest
+```
+
+The suite runs on synthetic fixtures, never on `performance.json` — that file is
+personal and gitignored, so depending on it would make the tests unrunnable for
+anyone else and change their meaning after every sync.
+
+What they cover is deliberately narrow: the guards described above. Those
+thresholds were fitted by hand against a real log, and the failure mode if one
+drifts is not a crash but confident, wrong coaching advice — so each real
+mis-logging case (the 16kg leg press, the 431kg push-up, the bodyweight dips,
+the one-pin cable drop) has a test naming what it protects against.
 
 ## Setup
 
@@ -130,10 +156,11 @@ Ask Claude to build a workout, confirm an option, then:
 python upload.py workouts/<filename>.py
 ```
 
-To see progression across sessions for a given exercise:
+To see what was *programmed* for an exercise over time (as opposed to what you
+actually lifted, which is what `coach.py` reports):
 
 ```bash
-python progress.py "incline dumbbell bench"
+python coach.py --prescribed "incline dumbbell bench"
 ```
 
 ## Notes
