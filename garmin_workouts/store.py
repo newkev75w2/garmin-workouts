@@ -27,6 +27,23 @@ ROOT = Path(__file__).resolve().parent.parent
 STORE_PATH = ROOT / "performance.json"
 HISTORY_PATH = ROOT / "history.json"
 
+def read_store() -> dict:
+    """
+    Current contents, or an empty store if nothing has been synced.
+
+    Used by the sync itself, which must cope with the file not existing yet.
+    Analysis should call load_store() instead so an empty store is an error
+    rather than silently producing verdicts about nothing.
+    """
+    if not STORE_PATH.exists():
+        return {"activities": {}}
+    return json.loads(STORE_PATH.read_text(encoding="utf-8"))
+
+
+def write_store(store: dict) -> None:
+    STORE_PATH.write_text(json.dumps(store, indent=2), encoding="utf-8")
+
+
 def load_store() -> dict:
     if not STORE_PATH.exists():
         raise SystemExit(

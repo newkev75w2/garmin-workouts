@@ -110,13 +110,15 @@ Command-line entry points live at the root; the logic they call sits in the
 | `coach.py` | CLI: verdicts, `--suggest` muscle groups, `--brief` for the skill, `--prescribed` for programmed history. |
 | `validate.py` | CLI: check a workout's exercises against the Garmin FIT SDK enum list. |
 | `garmin_workouts/constants.py` | Every tuned threshold and lookup table, in one documented place. |
-| `garmin_workouts/store.py` | Loads synced sessions, shapes them per exercise, and flags what can't be trusted. |
+| `garmin_workouts/store.py` | Owns `performance.json` — reads it, shapes sessions per exercise, flags what can't be trusted. |
+| `garmin_workouts/sync.py` | Fetches completed sessions from Garmin and hands them to the store. |
 | `garmin_workouts/judging.py` | Turns one exercise's history into a verdict and a next step. |
 | `garmin_workouts/planning.py` | Picks which muscle groups to train next, from recovery and volume. |
+| `garmin_workouts/report.py` | Formats results for the terminal, kept apart so wording can't change conclusions. |
 | `garmin_workouts/workout.py` | Loads a workout file and builds Garmin's workout JSON payload. |
 | `garmin_workouts/validation.py` | FIT SDK exercise-name validation. |
 | `garmin_workouts/history.py` | Reading/writing `history.json` — what's been uploaded and when. |
-| `garmin_workouts/client.py` | Shared authenticated-client setup. |
+| `garmin_workouts/client.py` | Authenticated-client setup, plus the interactive first-time login flow. |
 | `tests/` | Synthetic-fixture tests pinning the analysis guards. |
 | `workouts/` | Generated workout files, one per session. |
 
