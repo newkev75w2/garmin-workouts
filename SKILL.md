@@ -66,6 +66,12 @@ Mention the two or three findings that actually shaped the workout — especiall
 `stalled` or `check-data` — so the user sees why it differs from last time. Don't dump the
 whole table at them.
 
+**Unlabelled sets.** `python coach.py` (no `--muscles` filter) ends with any sets that had
+real weight and reps but no exercise name from the watch. These belong to no verdict, and
+they're frequently the heaviest work of the session — the watch classifies heavy barbell
+work poorly. Before acting on a `regressed` verdict, check whether that session has
+unlabelled heavy sets that are probably the same lift. Ask the user rather than assuming.
+
 If `performance.json` doesn't exist yet, say so and run `python sync.py` before continuing.
 
 **Weight is a suggestion, not a prescription in the file.** Garmin workout steps carry

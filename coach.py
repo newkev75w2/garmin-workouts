@@ -202,6 +202,36 @@ def flag_suspect_sessions(sessions: list) -> None:
         s["suspect_reason"] = "; ".join(reasons)
 
 
+def unlabelled_work(store: dict) -> list:
+    """
+    Sets with real reps and weight that the watch never attached an exercise to.
+
+    These would otherwise vanish from every verdict, and they are not trivial —
+    they're often the heaviest sets of a session (the watch struggles to
+    classify heavy barbell work), which can make a lift look like it regressed
+    when the missing sets were the lift. Nothing here can be safely attributed
+    to an exercise, so it is reported rather than guessed at.
+    """
+    out = []
+    for act in store.get("activities", {}).values():
+        sets = [
+            s
+            for s in act.get("sets", [])
+            if not s.get("exercise") and s.get("reps") and s.get("weight_kg")
+        ]
+        if sets:
+            out.append(
+                {
+                    "date": act["date"],
+                    "name": act["name"],
+                    "sets": [(s["reps"], s["weight_kg"]) for s in sets],
+                    "top_weight": max(s["weight_kg"] for s in sets),
+                }
+            )
+    out.sort(key=lambda x: x["date"], reverse=True)
+    return out
+
+
 def days_since(iso_date: str) -> int:
     try:
         return (date.today() - datetime.strptime(iso_date, "%Y-%m-%d").date()).days
@@ -413,6 +443,20 @@ def main():
             f"{len(suspect)} exercise(s) flagged check-data — manual entry on the "
             "watch slips, so those figures were left out of the progression maths."
         )
+
+    if not muscles:
+        unlabelled = unlabelled_work(load_store())
+        if unlabelled:
+            total = sum(len(u["sets"]) for u in unlabelled)
+            print(
+                f"\n{total} set(s) across {len(unlabelled)} session(s) had weight and "
+                "reps but no exercise name from the watch, so they belong to no "
+                "verdict above. These are often the heaviest sets of the day — if a "
+                "lift below looks like it regressed, check here first:"
+            )
+            for u in unlabelled[:5]:
+                detail = ", ".join(f"{r}x{w}kg" for r, w in u["sets"])
+                print(f"    {u['date']}  {u['name'][:24]:<26} {detail}")
 
 
 if __name__ == "__main__":
