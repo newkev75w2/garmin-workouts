@@ -96,6 +96,53 @@ own history, never across exercises.
 `performance.json` is gitignored by default, since it's your actual training
 data and this repo is public.
 
+## Seeing the exercises
+
+```bash
+python -c "from garmin_workouts import demos; demos.refresh_index()"   # once
+python preview.py workouts/back_biceps_1.py
+```
+
+Opens a local page showing each exercise with a demonstration image, so you can
+check a movement while choosing a workout rather than going to look for a video.
+
+### Every image says how much to trust it
+
+Garmin uses the FIT SDK's fixed enum (`REVERSE_GRIP_BARBELL_ROW`); wger uses
+community-entered names ("Reverse Grip Barbell Curls"). They are different
+taxonomies. Matched naively against a real 58-exercise list, string similarity
+paired `ALTERNATING_DUMBBELL_ROW` with a hammer curl and `BARBELL_BICEPS_CURL`
+with a *wrist* curl — and constraining by muscle group did not fix it, because a
+wrist curl and a biceps curl are both "Arms".
+
+So each card is labelled, and the label is the point:
+
+| Badge | Meaning |
+|---|---|
+| **verified** | Hand-checked pair — trust it |
+| **likely match** | Names and muscle group agree — glance before trusting |
+| **unverified guess** | May be the wrong movement; check the search link |
+| **no image** | Nothing plausible; links out to a video search |
+
+Roughly a quarter of exercises reach verified/likely. The rest are labelled
+honestly rather than dressed up, because a confidently-wrong demonstration is
+worse than none — it gets copied. Known-bad pairings are blocked outright in
+`demos.py`, and adding to the curated list is the way to promote a match.
+
+### Where the images come from
+
+[wger.de](https://wger.de), **CC BY-SA 3.0**, with per-image author metadata
+carried through and attributed on the page. Images are referenced by URL and
+loaded from wger when you view the page — nothing is copied into this repo, so
+the share-alike obligation stays off the project.
+
+The other obvious source, [free-exercise-db](https://github.com/yuhonas/free-exercise-db),
+is deliberately **not** used: its JSON is public domain, but the provenance of
+its images is unanswered in
+[#2](https://github.com/yuhonas/free-exercise-db/issues/2) and
+[#13](https://github.com/yuhonas/free-exercise-db/issues/13), so redistributing
+them would be a copyright gamble.
+
 ## Repo layout
 
 Command-line entry points live at the root; the logic they call sits in the

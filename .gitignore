@@ -13,3 +13,8 @@ __pycache__/
 
 .DS_Store
 .pytest_cache/
+
+# Cached wger exercise index (regenerate with demos.refresh_index) and the
+# generated preview pages. Both are derived data, not source.
+wger_index.json
+previews/

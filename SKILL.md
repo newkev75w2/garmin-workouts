@@ -17,6 +17,7 @@ on a cable-assist machine are fine; push-ups are not — the gym has better opti
 The project lives at `~/Projects/garmin-workouts/`. Run every command from that directory.
 
 CLI entry points (these are what you invoke):
+- `preview.py` — renders a workout as a local page with demonstration images
 - `sync.py` — pulls **completed** sessions down from Garmin into `performance.json` (actual reps and weight)
 - `coach.py` — verdicts per exercise; `--suggest`, `--brief`, `--muscles`, `--prescribed`
 - `upload.py` — validates then pushes a workout; `--dry-run` checks without uploading
@@ -169,6 +170,26 @@ Where:
 
 Then run `python validate.py workouts/<filename>.py` yourself (via shell) to confirm it's clean
 before telling the user it's ready — don't just trust the reference table, actually check.
+
+### Step 4b — Offer a visual preview
+
+Offer to show the workout with demonstration images:
+
+```bash
+python preview.py workouts/<filename>.py
+```
+
+Say plainly that the images are **best-effort matches**. Garmin's exercise enum and wger's
+names are different taxonomies, so every card is badged `verified` / `likely match` /
+`unverified guess` / `no image`, and only about a quarter reach verified or likely.
+
+Never describe an image as showing the exercise unless it is badged `verified`. If the user
+says a picture is wrong, add that pairing to `BLOCKED` in `garmin_workouts/demos.py`, and add
+the correct wger entry to `CURATED` if you can identify it — do not loosen the thresholds to
+make more images appear.
+
+If `wger_index.json` is missing, build it first:
+`python -c "from garmin_workouts import demos; demos.refresh_index()"`
 
 ### Step 5 — Upload
 
