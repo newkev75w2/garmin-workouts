@@ -1,0 +1,444 @@
+---
+name: garmin-workout
+description: >
+  Use this skill to build a custom strength workout for Garmin. Trigger on: "create a garmin
+  workout", "build me a gym workout for garmin", "I want a new lifting session on my garmin",
+  "add a workout to my garmin", "make me a push/pull/leg day for garmin", or any request to
+  generate a structured weight-training workout for a Garmin watch or Garmin Connect.
+---
+
+# Garmin Strength Workout Builder
+
+Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
+All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
+Default duration: **45–50 minutes**. Bodyweight exercises only if they genuinely fit (dips, pull-ups
+on a cable-assist machine are fine; push-ups are not — the gym has better options).
+
+The project lives at `~/Projects/garmin-workouts/` and contains:
+- `workouts/*.py` — generated workout files
+- `validate.py` — checks a workout's exercises against the real Garmin FIT SDK
+- `upload.py` — validates, then pushes a workout to Garmin Connect
+- `login.py` — one-time interactive auth, caches a session so upload.py never prompts again
+- `history.py` / `history.json` — logs every uploaded session (exercises, sets, reps, rest)
+- `progress.py` — shows how prescribed volume for each exercise has changed over time
+- `requirements.txt` — `pip install -r requirements.txt`
+
+**Read the Troubleshooting section at the bottom before debugging anything environment-related.**
+It documents real failures already hit and solved — don't rediscover them.
+
+---
+
+## Workflow
+
+### Step 1 — Gather requirements
+
+The user must provide:
+- **At least 2 muscle groups** (e.g. chest + shoulders, back + biceps, quads + hamstrings)
+- Duration if they want something other than the 45–50 min default
+
+If anything is missing, ask before proceeding. Example prompt:
+> "Which muscle groups? (e.g. chest & shoulders, back & biceps) — I'll default to ~45–50 min unless you say otherwise."
+
+### Step 2 — Check history before proposing options
+
+Read `history.json` (via `history.last_session_for(slug)`, or just read the JSON directly) for
+the most recent logged session matching this muscle-group slug. If one exists, use it to inform
+progression instead of guessing from scratch:
+- If an exercise repeats, nudge it forward — add a rep or two within its rep range, or add a set
+  if it was already at the top of the range. Note the bump inline, e.g. "Incline DB Press 3×11
+  (up from 3×10 last time)".
+- If nothing is logged yet for this slug, proceed as normal — there's nothing to progress from.
+
+This is volume/rep progression based on what was actually programmed before, not weight-based
+progression — this project doesn't read back actual weight lifted from Garmin Connect's activity
+data, so don't claim to know what weight the user used.
+
+### Step 3 — Offer 3 workout options
+
+Present three distinct options. **Each option must use a meaningfully different set of exercises**
+for the same muscle groups — not just the same movements with different rep counts. Think of it as
+three different routes to train the same muscles: one might be barbell-led, one dumbbell/cable-led,
+one machine-led, or they simply emphasise different angles and movement patterns.
+
+**Exercise count is not fixed.** Let it fall out of the time budget and the design of each option —
+a dense, short-rest circuit-style session might run 10–12 exercises, while a heavy compound day with
+90s rests might only fit 6–7. Varying the count *between* options is a feature, not a flaw: it gives
+the user a real structural choice, not just three flavours of the same shape. Say what each option
+trades off (fewer heavier movements vs. more variety/volume) so the choice is informed. Just keep
+total time in the target range and order things sensibly.
+
+Label them A / B / C and list the exercises with sets×reps inline, plus a one-line note on what
+each option is *for*. Example for chest + shoulders:
+
+> **Option A** — Barbell-anchored, 7 exercises
+> Barbell Bench Press 4×8 · Incline Barbell Bench Press 3×10 · Cable Crossover 3×12 · Barbell Shoulder Press 4×8 · Barbell Push Press 3×8 · Dumbbell Lateral Raise 3×15 · Bent-Over Lateral Raise 3×15
+> *Heaviest option, fewer movements, longest rests — strength focus.*
+>
+> **Option B** — Dumbbell & cable, 8 exercises
+> Incline Dumbbell Bench Press 4×10 · Dumbbell Bench Press 3×10 · Cable Crossover 3×12 · Incline Dumbbell Flye 3×12 · Arnold Press 3×10 · Seated Dumbbell Shoulder Press 3×10 · One Arm Cable Lateral Raise 3×15 · Front Raise 3×12
+> *More volume, joint-friendlier, hits more angles.*
+>
+> **Option C** — Machine + free weight mix, 10 exercises
+> Dumbbell Flye 4×12 · Smith Machine Bench Press 3×10 · Incline Dumbbell Bench Press 3×10 · Cable Crossover 3×15 · Seated Dumbbell Shoulder Press 4×10 · Dumbbell Lateral Raise 3×15 · Kneeling Rear Flye 3×12 · Face Pull 3×15 · Front Raise 3×12 · Seated Rear Lateral Raise 3×15
+> *Highest exercise variety, shorter rests, most stable/controlled.*
+
+Aim for as little overlap between options as possible so the user gets a real choice. Only use
+exercise names that appear in the Exercise Reference table below — every entry there is verified
+against Garmin's real FIT SDK, so there's no risk of picking something that fails validation later.
+
+### Step 4 — Create the workout file
+
+Once the user confirms a choice, write the workout to:
+`~/Projects/garmin-workouts/workouts/<slug>_<N>.py`
+
+Where:
+- `<slug>` = muscle groups lowercased, spaces→underscores (e.g. `chest_shoulders`)
+- `<N>` = next available integer (check existing files, never overwrite unless the user explicitly asks to replace a specific numbered file)
+
+Then run `python validate.py workouts/<filename>.py` yourself (via shell) to confirm it's clean
+before telling the user it's ready — don't just trust the reference table, actually check.
+
+### Step 5 — Upload
+
+Check whether `~/Projects/garmin-workouts/.garmin_session/` exists:
+- **If it exists**: a session is cached, so no credentials are needed. Whether *you* can run the
+  upload depends entirely on network reach — see Troubleshooting → "Can't reach Garmin from the
+  sandbox". Verify with a quick `curl` before promising to run it; if blocked, give the user the
+  command instead of pretending it'll work.
+- **If it doesn't exist**: tell the user to run `python login.py` once themselves, in their own
+  terminal (never ask them to paste a password into chat).
+
+Command to hand over:
+```
+cd ~/Projects/garmin-workouts
+python upload.py workouts/<filename>.py
+```
+
+---
+
+## Duration Estimation
+
+Target **2700–3000 seconds (45–50 min)** total.
+
+Estimate per exercise: `sets × (45s work + rest_seconds)`
+
+| Exercise type             | rest_seconds | Sets | ~Time  |
+|---------------------------|-------------|------|--------|
+| Compound (barbell/cable)  | 90s         | 4    | 9 min  |
+| Moderate compound / DB    | 75s         | 3–4  | 7 min  |
+| Cable / isolation         | 60s         | 3    | 5 min  |
+| High-rep finisher         | 45s         | 3    | 4 min  |
+
+Exercise count follows from this budget rather than a fixed rule — heavy long-rest sessions land
+around 6–7 movements, denser short-rest ones can reach 10–12. Verify by running
+`python -c "import upload; w=upload.load_workout('workouts/<file>.py'); print(upload.estimate_duration(w))"`
+rather than eyeballing it.
+
+---
+
+## Rest Time Rules
+
+**Maximum rest is 90 seconds.** Always set `rest_seconds` per exercise — never a blanket value.
+
+| Exercise class                  | rest_seconds |
+|---------------------------------|-------------|
+| Compound (barbell / heavy cable)| 90          |
+| Moderate compound / machine     | 75          |
+| DB / cable isolation            | 60          |
+| High-rep finisher (15–20 reps)  | 45          |
+
+---
+
+## Workout File Format
+
+```python
+# <Workout Name> — <muscle groups> (session N)
+# Run: python upload.py workouts/<filename>.py
+
+WORKOUT = {
+    "name": "Chest & Shoulders 1",
+    "description": "One-line description of the session focus",
+    "exercises": [
+        # Heavy compounds first, isolations last
+        {"name": "BARBELL_BENCH_PRESS",           "category": "BENCH_PRESS",   "sets": 4, "reps": 8,  "rest_seconds": 90},
+        {"name": "INCLINE_DUMBBELL_BENCH_PRESS",  "category": "BENCH_PRESS",   "sets": 3, "reps": 10, "rest_seconds": 75},
+        {"name": "CABLE_CROSSOVER",               "category": "FLYE",          "sets": 3, "reps": 12, "rest_seconds": 60},
+        {"name": "BARBELL_SHOULDER_PRESS",        "category": "SHOULDER_PRESS","sets": 4, "reps": 8,  "rest_seconds": 90},
+        {"name": "DUMBBELL_LATERAL_RAISE",        "category": "LATERAL_RAISE", "sets": 3, "reps": 15, "rest_seconds": 60},
+    ],
+}
+```
+
+For time-based sets, use `"seconds": 45` instead of `"reps"` (e.g. planks).
+
+---
+
+## Auto-increment Filenames
+
+Before writing, check which numbered files already exist:
+```python
+from pathlib import Path
+slug = "chest_shoulders"
+n = 1
+while Path(f"~/Projects/garmin-workouts/workouts/{slug}_{n}.py").exists():
+    n += 1
+filename = f"{slug}_{n}.py"
+```
+
+---
+
+## Validation — always verify, never guess
+
+`validate.py` reads the `*_exercise_name` enums straight out of the installed `garmin_fit_sdk`
+package's source rather than trusting a hand-maintained table. Run it after writing any new
+workout file:
+
+```
+python validate.py workouts/<filename>.py
+```
+
+`upload.py` also calls this automatically before pushing anything, so a bad name/category pair is
+caught before upload rather than after. If you want an exercise that isn't in the reference table
+below, don't guess a plausible-sounding name — run validate.py rather than assume.
+
+---
+
+## Exercise Reference
+
+Every name below is a **confirmed, exact match** against the Garmin FIT SDK's real exercise enum
+(verified programmatically, not guessed) — safe to use as-is. This is a curated subset for a
+fully-equipped commercial gym, not the complete library (Garmin's list runs into the hundreds per
+category, including many CrossFit/bodyweight/physio variants not relevant here). If you need
+something not listed, run `validate.py` against it before using it.
+
+### Chest
+| Garmin name                    | category     |
+|---------------------------------|--------------|
+| BARBELL_BENCH_PRESS            | BENCH_PRESS  |
+| INCLINE_BARBELL_BENCH_PRESS    | BENCH_PRESS  |
+| DECLINE_DUMBBELL_BENCH_PRESS   | BENCH_PRESS  |
+| DUMBBELL_BENCH_PRESS           | BENCH_PRESS  |
+| INCLINE_DUMBBELL_BENCH_PRESS   | BENCH_PRESS  |
+| SMITH_MACHINE_BENCH_PRESS      | BENCH_PRESS  |
+| INCLINE_SMITH_MACHINE_BENCH_PRESS | BENCH_PRESS |
+| CLOSE_GRIP_BARBELL_BENCH_PRESS | BENCH_PRESS  |
+| CABLE_CROSSOVER                | FLYE         |
+| DUMBBELL_FLYE                  | FLYE         |
+| INCLINE_DUMBBELL_FLYE          | FLYE         |
+| DECLINE_DUMBBELL_FLYE          | FLYE         |
+
+### Shoulders
+| Garmin name                    | category       |
+|---------------------------------|----------------|
+| BARBELL_SHOULDER_PRESS         | SHOULDER_PRESS |
+| SEATED_BARBELL_SHOULDER_PRESS  | SHOULDER_PRESS |
+| OVERHEAD_BARBELL_PRESS         | SHOULDER_PRESS |
+| OVERHEAD_DUMBBELL_PRESS        | SHOULDER_PRESS |
+| DUMBBELL_SHOULDER_PRESS        | SHOULDER_PRESS |
+| SEATED_DUMBBELL_SHOULDER_PRESS | SHOULDER_PRESS |
+| ARNOLD_PRESS                   | SHOULDER_PRESS |
+| BARBELL_PUSH_PRESS             | SHOULDER_PRESS |
+| DUMBBELL_PUSH_PRESS            | SHOULDER_PRESS |
+| SMITH_MACHINE_OVERHEAD_PRESS   | SHOULDER_PRESS |
+| MILITARY_PRESS                 | SHOULDER_PRESS |
+| DUMBBELL_LATERAL_RAISE         | LATERAL_RAISE  |
+| SEATED_LATERAL_RAISE           | LATERAL_RAISE  |
+| ONE_ARM_CABLE_LATERAL_RAISE    | LATERAL_RAISE  |
+| FRONT_RAISE                    | LATERAL_RAISE  |
+| CABLE_FRONT_RAISE              | LATERAL_RAISE  |
+| BENT_OVER_LATERAL_RAISE        | LATERAL_RAISE  |
+| SEATED_REAR_LATERAL_RAISE      | LATERAL_RAISE  |
+| KNEELING_REAR_FLYE             | FLYE           |
+| FACE_PULL                      | ROW            |
+| FACE_PULL_WITH_EXTERNAL_ROTATION | ROW          |
+
+### Back
+| Garmin name                  | category |
+|-------------------------------|----------|
+| BARBELL_ROW                  | ROW      |
+| DUMBBELL_ROW                 | ROW      |
+| SEATED_CABLE_ROW             | ROW      |
+| T_BAR_ROW                    | ROW      |
+| ONE_ARM_BENT_OVER_ROW        | ROW      |
+| SEATED_DUMBBELL_ROW          | ROW      |
+| CABLE_ROW_STANDING           | ROW      |
+| CHEST_SUPPORTED_DUMBBELL_ROW | ROW      |
+| PULL_UP                      | PULL_UP  |
+| CHIN_UP                      | PULL_UP  |
+| WIDE_GRIP_PULL_UP            | PULL_UP  |
+| NEUTRAL_GRIP_PULL_UP         | PULL_UP  |
+| WEIGHTED_PULL_UP             | PULL_UP  |
+| LAT_PULLDOWN                 | PULL_UP  |
+| WIDE_GRIP_LAT_PULLDOWN       | PULL_UP  |
+| CLOSE_GRIP_LAT_PULLDOWN      | PULL_UP  |
+
+### Legs
+| Garmin name                       | category  |
+|-------------------------------------|-----------|
+| SQUAT                             | SQUAT     |
+| BARBELL_BACK_SQUAT                | SQUAT     |
+| BARBELL_FRONT_SQUAT               | SQUAT     |
+| BARBELL_HACK_SQUAT                | SQUAT     |
+| LEG_PRESS                         | SQUAT     |
+| GOBLET_SQUAT                      | SQUAT     |
+| DUMBBELL_SQUAT                    | SQUAT     |
+| BARBELL_DEADLIFT                  | DEADLIFT  |
+| ROMANIAN_DEADLIFT                 | DEADLIFT  |
+| SUMO_DEADLIFT                     | DEADLIFT  |
+| TRAP_BAR_DEADLIFT                 | DEADLIFT  |
+| DUMBBELL_DEADLIFT                 | DEADLIFT  |
+| RACK_PULL                         | DEADLIFT  |
+| BARBELL_LUNGE                     | LUNGE     |
+| DUMBBELL_LUNGE                    | LUNGE     |
+| WALKING_LUNGE                     | LUNGE     |
+| WALKING_DUMBBELL_LUNGE            | LUNGE     |
+| BARBELL_REVERSE_LUNGE             | LUNGE     |
+| BARBELL_BULGARIAN_SPLIT_SQUAT     | LUNGE     |
+| DUMBBELL_BULGARIAN_SPLIT_SQUAT    | LUNGE     |
+| HIP_RAISE                         | HIP_RAISE |
+| BARBELL_HIP_THRUST_WITH_BENCH     | HIP_RAISE |
+| BARBELL_HIP_THRUST_ON_FLOOR       | HIP_RAISE |
+| STANDING_CALF_RAISE               | CALF_RAISE|
+| STANDING_BARBELL_CALF_RAISE       | CALF_RAISE|
+| STANDING_DUMBBELL_CALF_RAISE      | CALF_RAISE|
+| SEATED_CALF_RAISE                 | CALF_RAISE|
+| DONKEY_CALF_RAISE                 | CALF_RAISE|
+
+### Arms
+| Garmin name                            | category          |
+|------------------------------------------|-------------------|
+| BARBELL_BICEPS_CURL                    | CURL              |
+| DUMBBELL_BICEPS_CURL                   | CURL              |
+| SEATED_DUMBBELL_BICEPS_CURL            | CURL              |
+| STANDING_DUMBBELL_BICEPS_CURL          | CURL              |
+| INCLINE_DUMBBELL_BICEPS_CURL           | CURL              |
+| CABLE_BICEPS_CURL                      | CURL              |
+| DUMBBELL_HAMMER_CURL                   | CURL              |
+| CABLE_HAMMER_CURL                      | CURL              |
+| EZ_BAR_PREACHER_CURL                   | CURL              |
+| STANDING_EZ_BAR_BICEPS_CURL            | CURL              |
+| TRICEPS_PRESSDOWN                      | TRICEPS_EXTENSION |
+| ROPE_PRESSDOWN                         | TRICEPS_EXTENSION |
+| REVERSE_GRIP_TRICEPS_PRESSDOWN         | TRICEPS_EXTENSION |
+| CABLE_OVERHEAD_TRICEPS_EXTENSION       | TRICEPS_EXTENSION |
+| SEATED_DUMBBELL_OVERHEAD_TRICEPS_EXTENSION | TRICEPS_EXTENSION |
+| OVERHEAD_DUMBBELL_TRICEPS_EXTENSION    | TRICEPS_EXTENSION |
+| LYING_EZ_BAR_TRICEPS_EXTENSION         | TRICEPS_EXTENSION |
+| CABLE_LYING_TRICEPS_EXTENSION          | TRICEPS_EXTENSION |
+| BODY_WEIGHT_DIP                        | TRICEPS_EXTENSION |
+| WEIGHTED_DIP                           | TRICEPS_EXTENSION |
+
+### Core
+| Garmin name              | category   |
+|----------------------------|------------|
+| PLANK                    | PLANK      |
+| SIDE_PLANK                | PLANK      |
+| CABLE_CRUNCH              | CRUNCH     |
+| STANDING_CABLE_CRUNCH     | CRUNCH     |
+| KNEELING_CABLE_CRUNCH     | CRUNCH     |
+| HANGING_LEG_RAISE         | LEG_RAISE  |
+| HANGING_KNEE_RAISE        | LEG_RAISE  |
+| LYING_STRAIGHT_LEG_RAISE  | LEG_RAISE  |
+| RUSSIAN_TWIST             | CORE       |
+| CABLE_SIDE_BEND           | CORE       |
+| BARBELL_ROLLOUT           | CORE       |
+
+---
+
+## Programming Guidelines (coach knowledge)
+
+**Exercise order:** Always heavy compounds first (when the CNS is fresh), moderate compounds
+second, isolations last. Never program deadlifts after squats in the same session.
+
+**Rep ranges:**
+- Heavy/compound: 6–8 reps, 4 sets, 90s rest
+- Moderate: 10–12 reps, 3–4 sets, 60–75s rest
+- Isolation/finisher: 12–15 reps, 3 sets, 45–60s rest
+
+**Muscle group pairing logic:**
+- Chest + Shoulders → push muscles, share OHP and bench mechanics
+- Back + Biceps → pull muscles, biceps already get work on rows/pulldowns
+- Quads + Hamstrings → full leg day, squat + deadlift variant
+- Quads + Glutes → squat focus + hip thrust
+- Chest + Triceps → triceps assist on all pressing
+- Back + Rear Delts → rows hit rear delts naturally
+- Chest + Abs → unrelated muscle groups, so chest work first at full intensity, then core
+
+**Variety and progression across sessions:** Check `history.json` for the last logged session with
+this slug (see Step 2) and use it. If nothing's logged, fall back to varying exercises from
+whatever the most recent workout *file* for this slug used.
+
+---
+
+## Troubleshooting — known issues and their fixes
+
+These are all real failures already hit and diagnosed. Check here first.
+
+### Exercise-name gotchas (caused a silent wrong-exercise bug)
+Garmin's naming does not match gym vernacular. Confirmed traps:
+- **No generic `LATERAL_RAISE`** — invalid on its own. Use `DUMBBELL_LATERAL_RAISE` etc.
+- **No pec deck entry at all** (`PECK_DECK`/`PEC_DECK` both invalid). Substitute `DUMBBELL_FLYE`
+  or `CABLE_CROSSOVER`.
+- **`FACE_PULL` is category `ROW`**, not `LATERAL_RAISE`.
+- **Rear delt fly is `KNEELING_REAR_FLYE`**, category `FLYE`. No "machine" variant exists.
+- **No chest press machine entry** — substitute `DUMBBELL_BENCH_PRESS` or a smith machine variant.
+- **Bulgarian split squat is category `LUNGE`**, not `SQUAT`.
+- **Core is four separate categories** (`PLANK`, `CRUNCH`, `LEG_RAISE`, `CORE`), not one bucket.
+- **No `DEAD_BUG` entry.**
+
+**Fix / prevention:** never hand-guess a name. `validate.py` parses the installed SDK and suggests
+close matches on failure. When substituting because no real entry exists, say so explicitly to the
+user rather than silently swapping — they will notice and ask.
+
+### `TypeError: __init__() got an unexpected keyword argument 'prompt_mfa'`
+**Cause:** an old `garminconnect` (0.2.x) is installed. That version's `Garmin.__init__` only takes
+`(email, password, is_cn)`; `prompt_mfa` is a modern-version feature.
+
+**Root cause underneath it:** the user was on **Python 3.9** (via pyenv). Modern `garminconnect`
+requires **3.10+**, so `pip install --upgrade garminconnect` silently did nothing and left 0.2.x in
+place — producing the *identical* error again and wasting a round trip.
+
+**Fix:**
+```
+python3 --version                 # confirm the real interpreter in use
+pyenv install 3.12 && pyenv local 3.12
+pip install --upgrade garminconnect curl_cffi garmin-fit-sdk
+```
+Then re-run `login.py`. **Always confirm the version actually changed** after an upgrade —
+`pip show garminconnect` — before telling the user to retry.
+
+**Also:** `login.py` and `upload.py` now introspect `Garmin.__init__` and only pass `prompt_mfa`
+if supported, so this should degrade to a real error rather than a TypeError.
+
+### Login fails on `garminconnect` 0.2.x even with correct code
+`garminconnect` 0.2.x is built on **`garth`, which is deprecated**. Its maintainer has stated Garmin
+changed their auth flow and **new logins through garth no longer work** — only previously-saved
+sessions survive until they expire. No code change fixes this. The only path is upgrading to a
+modern `garminconnect` on Python 3.10+.
+
+### Can't reach Garmin from the sandbox
+The assistant's shell is network-restricted to an allowlist that **does not include Garmin's
+domains**. `connect.garmin.com`, `connectapi.garmin.com` and `sso.garmin.com` all return HTTP `000`
+(connection never establishes). This is *not* a credentials problem — a cached session in
+`.garmin_session/` is readable, the outbound connection is simply refused.
+
+**Consequence:** the assistant cannot run `upload.py`. Don't promise to. Verify before claiming
+either way:
+```
+curl -s -o /dev/null -w "%{http_code}\n" --max-time 6 https://connect.garmin.com
+```
+`000` = blocked, hand the user the command. Anything else = try it.
+
+### Diagnosing library API mismatches generally
+Before writing code against any version of these libraries, introspect what's actually installed
+rather than trusting docs (GitHub master is often far ahead of the PyPI release the user has):
+```
+pip show garminconnect
+python3 -c "import inspect, garminconnect; print(inspect.signature(garminconnect.Garmin.__init__)); print(inspect.signature(garminconnect.Garmin.login))"
+```
+
+### Deleting files
+Deleting inside the user's folder needs explicit permission and will fail with "Operation not
+permitted" until granted. Request it rather than reporting the delete as impossible. Better: avoid
+creating stray files — check existing `workouts/` filenames *before* writing, so no cleanup is
+needed.

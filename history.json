@@ -1,0 +1,137 @@
+[
+  {
+    "date": "2026-08-04T20:33:19+00:00",
+    "file": "workouts/chest_abs_1.py",
+    "name": "Chest & Abs 1",
+    "description": "Dumbbell & cable chest volume, cable-led core finish. ~45 min.",
+    "exercises": [
+      {
+        "name": "INCLINE_DUMBBELL_BENCH_PRESS",
+        "category": "BENCH_PRESS",
+        "sets": 4,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "DUMBBELL_BENCH_PRESS",
+        "category": "BENCH_PRESS",
+        "sets": 4,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "INCLINE_DUMBBELL_FLYE",
+        "category": "FLYE",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "CABLE_CROSSOVER",
+        "category": "FLYE",
+        "sets": 3,
+        "reps": 15,
+        "rest_seconds": 60
+      },
+      {
+        "name": "KNEELING_CABLE_CRUNCH",
+        "category": "CRUNCH",
+        "sets": 3,
+        "reps": 15,
+        "rest_seconds": 60
+      },
+      {
+        "name": "HANGING_KNEE_RAISE",
+        "category": "LEG_RAISE",
+        "sets": 3,
+        "reps": 15,
+        "rest_seconds": 45
+      },
+      {
+        "name": "RUSSIAN_TWIST",
+        "category": "CORE",
+        "sets": 3,
+        "reps": 20,
+        "rest_seconds": 45
+      },
+      {
+        "name": "SIDE_PLANK",
+        "category": "PLANK",
+        "sets": 3,
+        "seconds": 45,
+        "rest_seconds": 45
+      }
+    ]
+  },
+  {
+    "date": "2026-08-06T09:47:14+00:00",
+    "file": "workouts/legs_1.py",
+    "name": "Legs 1",
+    "description": "Machine + free weight circuit, no barbell. Quad/ham/glute/calf balance. ~48 min.",
+    "exercises": [
+      {
+        "name": "ROMANIAN_DEADLIFT",
+        "category": "DEADLIFT",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "LEG_PRESS",
+        "category": "SQUAT",
+        "sets": 4,
+        "reps": 12,
+        "rest_seconds": 75
+      },
+      {
+        "name": "GOBLET_SQUAT",
+        "category": "SQUAT",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "DUMBBELL_LUNGE",
+        "category": "LUNGE",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "DUMBBELL_REVERSE_LUNGE",
+        "category": "LUNGE",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "WEIGHTED_HIP_RAISE",
+        "category": "HIP_RAISE",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "HIP_RAISE",
+        "category": "HIP_RAISE",
+        "sets": 3,
+        "reps": 15,
+        "rest_seconds": 45
+      },
+      {
+        "name": "STANDING_CALF_RAISE",
+        "category": "CALF_RAISE",
+        "sets": 3,
+        "reps": 20,
+        "rest_seconds": 45
+      },
+      {
+        "name": "SEATED_CALF_RAISE",
+        "category": "CALF_RAISE",
+        "sets": 3,
+        "reps": 20,
+        "rest_seconds": 45
+      }
+    ]
+  }
+]

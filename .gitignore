@@ -1,0 +1,9 @@
+# Garmin session tokens - never commit these
+.garmin_session/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+.DS_Store
