@@ -16,3 +16,6 @@ __pycache__/
 
 # Cached sleep/readiness metrics — personal, and re-fetchable
 recovery.json
+
+# Synced runs and VO2max series — personal, re-fetchable
+runs.json

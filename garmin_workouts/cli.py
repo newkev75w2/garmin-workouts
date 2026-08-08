@@ -51,6 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
     coach.add_argument("--prescribed", nargs="?", const="", metavar="EXERCISE",
                        help="show what was programmed over time instead of performed")
 
+    run_cmd = sub.add_parser("run", help="running intensity distribution and VO2max")
+    run_cmd.add_argument("--days", type=int, default=90,
+                         help="how far back to look (default 90)")
+
     sync_cmd = sub.add_parser("sync", help="pull completed sessions from Garmin Connect")
     sync_cmd.add_argument("limit", nargs="?", type=int, default=30,
                           help="how many recent activities to scan (default 30)")
@@ -155,11 +159,22 @@ def _run_upload(args) -> None:
     history.log_session(str(path), w)
 
 
+def _run_running(args) -> None:
+    report.print_running(args.days)
+
+
 def _run_sync(args) -> None:
-    from . import recovery
+    from . import recovery, running
     from .sync import sync
 
     sync(args.limit)
+
+    print("\nPulling runs and VO2max...")
+    try:
+        result = running.sync_runs(args.limit)
+        print(f"  {result['added']} new run(s), {result['total']} total.")
+    except Exception as exc:
+        print(f"  could not read running data: {exc}")
 
     if not args.no_recovery:
         print("\nRefreshing recovery metrics (sleep, readiness, body battery)...")
@@ -180,6 +195,7 @@ def _run_login(_args) -> None:
 
 HANDLERS = {
     "suggest": _run_suggest,
+    "run": _run_running,
     "coach": _run_coach,
     "sync": _run_sync,
     "validate": _run_validate,

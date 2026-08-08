@@ -181,3 +181,41 @@ def print_workout(w: dict) -> None:
             f"{effort:<8} {ex['rest_seconds']}s rest"
         )
     print()
+
+
+def print_running(days: int = 90) -> None:
+    """Intensity distribution and the VO2max it is aiming at."""
+    from . import running
+
+    dist = running.distribution(days)
+    if not dist:
+        print("No runs synced yet — run `garmin sync` first.")
+        return
+
+    trend = running.vo2max_trend()
+    if trend:
+        first, last = trend[0], trend[-1]
+        arrow = "->" if len(trend) > 1 else ""
+        change = f" {arrow} {last[1]:g} ({last[0]})" if len(trend) > 1 else ""
+        print(f"\nVO2max: {first[1]:g} ({first[0]}){change}")
+
+    print(
+        f"\nLast {dist['days']} days: {dist['runs']} runs, {dist['km']}km, "
+        f"{dist['minutes']} min   [max HR {dist['max_hr']:g}, from your own data]\n"
+    )
+
+    widest = max(dist["buckets"].values()) or 1
+    for name, count in dist["buckets"].items():
+        bar = "#" * int(round(count / widest * 24))
+        share = count / dist["runs"] if dist["runs"] else 0
+        print(f"  {name:<14}{count:>3} {share:>5.0%}  {bar}")
+
+    print(
+        f"\n  easy {dist['easy_share']:.0%} · grey {dist['grey_share']:.0%} · "
+        f"hard {dist['hard'] / dist['runs']:.0%}"
+        if dist["runs"] else ""
+    )
+
+    print()
+    for note in running.advice(dist):
+        print(f"  - {note}")

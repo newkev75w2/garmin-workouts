@@ -42,6 +42,7 @@ Everything runs through one command, `garmin`, installed via `pip install -e .`:
 - `garmin coach` — verdicts per exercise; `--brief`, `--muscles`, `--prescribed`
 - `garmin upload <file>` — validates then pushes; `--dry-run` checks without uploading
 - `garmin validate <file>` — checks exercises against the real Garmin FIT SDK
+- `garmin run` — running intensity distribution and VO2max trend; `--days`
 - `garmin login` — one-time interactive auth, caches a session so nothing else prompts
 
 If `garmin` is not found, run `pip install -e .` from the project directory. The older
@@ -121,6 +122,12 @@ progressing, and say why. When it says nothing, nothing is wrong — don't inven
 timer correctly but still prompts for a rep count afterwards; that number is meaningless and the
 analysis ignores it in favour of the recorded duration. Warn the user once that the rep prompt
 on a plank can be skipped or filled with anything.
+
+**Cardio is part of the picture.** `garmin run` shows how running effort is distributed across
+heart-rate zones plus the VO2max trend. It matters to strength programming because heavy legs
+and quality runs interfere with each other: don't put a heavy leg session the day before a hard
+run, and if both fall on one day, the priority session goes first and the other stays easy and
+short. An easy 20-30 min run pairs fine with a strength session hours apart.
 
 **Weight is a suggestion, not a prescription in the file.** Garmin workout steps carry
 exercise/sets/reps/rest only — there's no weight field — so target loads belong in the
