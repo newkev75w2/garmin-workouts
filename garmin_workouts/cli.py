@@ -51,6 +51,13 @@ def build_parser() -> argparse.ArgumentParser:
     coach.add_argument("--prescribed", nargs="?", const="", metavar="EXERCISE",
                        help="show what was programmed over time instead of performed")
 
+    plan_cmd = sub.add_parser("plan", help="a week of strength and running together")
+    plan_cmd.add_argument("--goal", default="vo2max",
+                          choices=["vo2max", "endurance", "strength", "balanced"],
+                          help="what the week is built around (default vo2max)")
+    plan_cmd.add_argument("--start", metavar="YYYY-MM-DD",
+                          help="first day of the week (default tomorrow)")
+
     run_cmd = sub.add_parser("run", help="running intensity distribution and VO2max")
     run_cmd.add_argument("--days", type=int, default=90,
                          help="how far back to look (default 90)")
@@ -159,6 +166,11 @@ def _run_upload(args) -> None:
     history.log_session(str(path), w)
 
 
+def _run_plan(args) -> None:
+    start = date.fromisoformat(args.start) if args.start else None
+    report.print_plan(args.goal, start)
+
+
 def _run_running(args) -> None:
     report.print_running(args.days)
 
@@ -196,6 +208,7 @@ def _run_login(_args) -> None:
 HANDLERS = {
     "suggest": _run_suggest,
     "run": _run_running,
+    "plan": _run_plan,
     "coach": _run_coach,
     "sync": _run_sync,
     "validate": _run_validate,

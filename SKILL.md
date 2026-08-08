@@ -43,6 +43,7 @@ Everything runs through one command, `garmin`, installed via `pip install -e .`:
 - `garmin upload <file>` — validates then pushes; `--dry-run` checks without uploading
 - `garmin validate <file>` — checks exercises against the real Garmin FIT SDK
 - `garmin run` — running intensity distribution and VO2max trend; `--days`
+- `garmin plan` — a week of strength and running together; `--goal`, `--start`
 - `garmin login` — one-time interactive auth, caches a session so nothing else prompts
 
 If `garmin` is not found, run `pip install -e .` from the project directory. The older
@@ -122,6 +123,13 @@ progressing, and say why. When it says nothing, nothing is wrong — don't inven
 timer correctly but still prompts for a rep count afterwards; that number is meaningless and the
 analysis ignores it in favour of the recorded duration. Warn the user once that the rep prompt
 on a plank can be skipped or filled with anything.
+
+**Planning a week.** `garmin plan --goal vo2max` lays out seven days across both disciplines.
+It encodes the interference constraints — legs never adjacent to a quality run, easy runs allowed
+to share a day with upper-body work six hours apart, priority session first. Use it when the user
+asks about a week, a schedule, or how to fit running and lifting together. Pass on its ramp
+warning: if it says the plan is a step up from current volume, say so rather than presenting the
+week as immediately achievable.
 
 **Cardio is part of the picture.** `garmin run` shows how running effort is distributed across
 heart-rate zones plus the VO2max trend. It matters to strength programming because heavy legs

@@ -219,3 +219,26 @@ def print_running(days: int = 90) -> None:
     print()
     for note in running.advice(dist):
         print(f"  - {note}")
+
+
+def print_plan(goal: str = "vo2max", start=None) -> None:
+    """A week laid out, with the reasoning that shaped it."""
+    from . import plan as planner
+
+    week = planner.build_week(start=start, goal=goal)
+
+    print(f"\nWeek of {week['start']}  —  goal: {week['goal']}\n")
+    for day in week["days"]:
+        label = day["date"].strftime("%a %d %b")
+        if not day["sessions"]:
+            print(f"  {label}   rest")
+        else:
+            for i, s in enumerate(day["sessions"]):
+                head = label if i == 0 else " " * len(label)
+                kind = f"{s['type']} ({s['intensity']})"
+                print(f"  {head}   {s['when']:<3} {kind:<20} {s['minutes']:>3}min  {s['detail']}")
+        for note in day["notes"]:
+            print(f"  {' ' * len(label)}        - {note}")
+    print()
+    for line in week["rationale"]:
+        print(f"  {line}")
