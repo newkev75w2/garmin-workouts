@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.5.0**
+**Skill build: v1.4.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -135,12 +135,6 @@ progressing, and say why. When it says nothing, nothing is wrong — don't inven
 timer correctly but still prompts for a rep count afterwards; that number is meaningless and the
 analysis ignores it in favour of the recorded duration. Warn the user once that the rep prompt
 on a plank can be skipped or filled with anything.
-
-**Garmin's own suggested runs.** `garmin plan` asks Garmin for its daily suggested workouts and
-uses them for the hard days when it has any. Garmin builds those from training load, so it
-returns nothing until there is enough consistent running for it to form a view — an empty result
-is normal, not a failure. The plan says which source each quality session came from; pass that on
-rather than implying Garmin recommended something it didn't.
 
 **Planning a week.** `garmin plan --goal vo2max` lays out seven days across both disciplines.
 It encodes the interference constraints — legs never adjacent to a quality run, easy runs allowed

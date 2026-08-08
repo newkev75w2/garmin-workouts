@@ -7,11 +7,8 @@ garmin_workouts/constants.py
 garmin_workouts/history.py
 garmin_workouts/judging.py
 garmin_workouts/paths.py
-garmin_workouts/plan.py
 garmin_workouts/planning.py
-garmin_workouts/recovery.py
 garmin_workouts/report.py
-garmin_workouts/running.py
 garmin_workouts/store.py
 garmin_workouts/sync.py
 garmin_workouts/validation.py
@@ -22,11 +19,6 @@ garmin_workouts.egg-info/dependency_links.txt
 garmin_workouts.egg-info/entry_points.txt
 garmin_workouts.egg-info/requires.txt
 garmin_workouts.egg-info/top_level.txt
-tests/test_adherence.py
 tests/test_judging.py
-tests/test_paths.py
-tests/test_plan.py
 tests/test_planning.py
-tests/test_recovery.py
-tests/test_running.py
 tests/test_store.py
