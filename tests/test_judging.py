@@ -127,3 +127,15 @@ class TestSpecialCases:
         result = verdict_for(store, "DUMBBELL_BENCH_PRESS", {"DUMBBELL_BENCH_PRESS": 10})
         if result["verdict"] == "progressing":
             assert not result["suggestion"].startswith("hold ")
+
+
+class TestStaleHandling:
+    def test_stale_exercises_are_still_produced_by_the_analysis(self):
+        """
+        Collapsing them is a reporting decision, not an analysis one — the
+        verdict must still exist so `--stale` can show it.
+        """
+        store = sessions_of("CABLE_WOODCHOP",
+                            [(60, 20.0, [12]), (30, 20.0, [12])],
+                            category="CORE")
+        assert verdict_for(store, "CABLE_WOODCHOP")["verdict"] == "stale"

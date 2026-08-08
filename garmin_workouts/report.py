@@ -78,7 +78,12 @@ def print_prescribed(filter_term: str | None) -> None:
             print(f"  {date_str[:10]}  {effort:<10} {ex['rest_seconds']}s rest")
 
 
-def print_report(results: list, muscles: list | None) -> None:
+def print_report(results: list, muscles: list | None, show_stale: bool = False) -> None:
+    hidden = 0
+    if not show_stale:
+        hidden = sum(1 for r in results if r["verdict"] == "stale")
+        results = [r for r in results if r["verdict"] != "stale"]
+
     label = f" for {', '.join(muscles)}" if muscles else ""
     print(f"\nPerformance review{label} — {len(results)} exercises\n")
 
@@ -98,6 +103,9 @@ def print_report(results: list, muscles: list | None) -> None:
         if r.get("adherence"):
             print(f"      note: {r['adherence']}")
         print()
+
+    if hidden:
+        print(f"({hidden} exercises untrained for 21+ days omitted — use --stale to see them.)\n")
 
     suspect = [r for r in results if r["verdict"] == "check-data"]
     if suspect:
@@ -123,8 +131,19 @@ def print_unlabelled() -> None:
         print(f"    {u['date']}  {u['name'][:24]:<26} {detail}")
 
 
-def print_brief(results: list) -> None:
-    """One line per exercise — the form the skill reads back."""
+def print_brief(results: list, show_stale: bool = False) -> None:
+    """
+    One line per exercise — the form the skill reads back.
+
+    Stale exercises are collapsed by default. Once a few months of history is
+    synced they outnumber everything else (27 of 78 on a real log), and an
+    exercise untouched for a month says nothing about what to programme today.
+    They are counted, not hidden, so they can still be asked for.
+    """
+    stale = [r for r in results if r["verdict"] == "stale"]
+    if not show_stale:
+        results = [r for r in results if r["verdict"] != "stale"]
+
     for r in results:
         reps = "/".join(str(x) for x in r["last_reps"]) or "-"
         weight = f"{r['last_weight']}kg" if r["last_weight"] else "bw"
@@ -136,6 +155,14 @@ def print_brief(results: list) -> None:
         if r.get("adherence"):
             line += f" | ADHERENCE: {r['adherence']}"
         print(line)
+
+    if stale and not show_stale:
+        names = ", ".join(s["exercise"] for s in stale[:6])
+        more = f" and {len(stale) - 6} more" if len(stale) > 6 else ""
+        print(
+            f"\n({len(stale)} exercises not trained in 21+ days, omitted: "
+            f"{names}{more}. Use --stale to include them.)"
+        )
 
 
 def print_workout(w: dict) -> None:

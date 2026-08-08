@@ -46,6 +46,8 @@ def build_parser() -> argparse.ArgumentParser:
                        help="one line per exercise (what the skill reads)")
     coach.add_argument("--muscles", nargs="+", metavar="GROUP",
                        help="limit to these muscle groups")
+    coach.add_argument("--stale", action="store_true",
+                       help="include exercises untrained for 21+ days")
     coach.add_argument("--prescribed", nargs="?", const="", metavar="EXERCISE",
                        help="show what was programmed over time instead of performed")
 
@@ -88,10 +90,10 @@ def _run_coach(args) -> None:
         return
 
     if args.brief:
-        report.print_brief(results)
+        report.print_brief(results, args.stale)
         return
 
-    report.print_report(results, args.muscles)
+    report.print_report(results, args.muscles, args.stale)
     if not args.muscles:
         report.print_unlabelled()
 
