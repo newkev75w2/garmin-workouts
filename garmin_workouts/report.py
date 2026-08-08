@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date
 
-from . import history, planning, store
+from . import history, planning, recovery, store
 
 
 def print_suggestion(
@@ -33,6 +33,10 @@ def print_suggestion(
             f"{g['sessions']:>10}{g['sets']:>7}  {status}"
         )
     print()
+
+    note = recovery.advice()
+    if note:
+        print(f"Recovery: {note}\n")
 
     if not s["primary"]:
         print(s["reason"])
@@ -90,7 +94,10 @@ def print_report(results: list, muscles: list | None) -> None:
             + (f", target {r['target_reps']} reps" if r["target_reps"] else "")
             + ")"
         )
-        print(f"      next: {r['suggestion']}\n")
+        print(f"      next: {r['suggestion']}")
+        if r.get("adherence"):
+            print(f"      note: {r['adherence']}")
+        print()
 
     suspect = [r for r in results if r["verdict"] == "check-data"]
     if suspect:
@@ -121,10 +128,14 @@ def print_brief(results: list) -> None:
     for r in results:
         reps = "/".join(str(x) for x in r["last_reps"]) or "-"
         weight = f"{r['last_weight']}kg" if r["last_weight"] else "bw"
-        print(
-            f"{r['exercise']}: {weight} x{reps} ({r['last_date']}, "
-            f"{r['sessions']} sessions) [{r['verdict']}] -> {r['suggestion']}"
+        line = (
+            f"{r['exercise']}: {weight} x{reps}{r.get('unit_suffix', '')} "
+            f"({r['last_date']}, {r['sessions']} sessions) "
+            f"[{r['verdict']}] -> {r['suggestion']}"
         )
+        if r.get("adherence"):
+            line += f" | ADHERENCE: {r['adherence']}"
+        print(line)
 
 
 def print_workout(w: dict) -> None:

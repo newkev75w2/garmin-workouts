@@ -65,6 +65,40 @@ def prescribed_reps() -> dict:
     return targets
 
 
+TIMED_CATEGORIES = {"PLANK"}
+
+
+def is_timed(name: str, sets: list) -> bool:
+    """
+    Whether this exercise is held for time rather than counted in reps.
+
+    Garmin still collects a rep count for holds, so the category is the reliable
+    signal — backed up by every set carrying a duration.
+    """
+    if sets and sets[0].get("category") in TIMED_CATEGORIES:
+        return True
+    if "PLANK" in name or "HOLD" in name:
+        return all(s.get("duration_s") for s in sets)
+    return False
+
+
+def set_value(s: dict, timed: bool):
+    """
+    The number that actually means something for this set.
+
+    Seconds for a timed hold, reps otherwise — falling back to duration when the
+    watch recorded no rep count at all, so the set still counts for something
+    rather than being dropped or landing in the maths as None.
+    """
+    if timed and s.get("duration_s"):
+        return round(s["duration_s"])
+    if s.get("reps"):
+        return s["reps"]
+    if s.get("duration_s"):
+        return round(s["duration_s"])
+    return None
+
+
 def session_summaries(store: dict) -> dict:
     """
     {EXERCISE_NAME: [session, ...]} oldest first, where each session is
@@ -75,12 +109,16 @@ def session_summaries(store: dict) -> dict:
     for act in store.get("activities", {}).values():
         grouped = defaultdict(list)
         for s in act.get("sets", []):
-            if s.get("exercise") and s.get("reps"):
+            # A timed hold records a meaningless rep count — a real 45s plank
+            # came back as 5, 7 and 12 "reps" — but its duration is accurate.
+            # Keep those sets on duration instead of discarding them.
+            if s.get("exercise") and (s.get("reps") or s.get("duration_s")):
                 grouped[s["exercise"]].append(s)
 
         for name, sets in grouped.items():
             weights = [s["weight_kg"] for s in sets if s.get("weight_kg")]
             top = max(weights) if weights else None
+            timed = is_timed(name, sets)
 
             if top:
                 working = [
@@ -97,10 +135,16 @@ def session_summaries(store: dict) -> dict:
                     "date": act["date"],
                     "category": sets[0].get("category"),
                     "top_weight": top,
-                    "working_reps": [s["reps"] for s in working],
-                    "total_reps": sum(s["reps"] for s in sets),
+                    "timed": timed,
+                    "unit": "s" if timed else "reps",
+                    # For a timed hold the useful number is seconds held, not the
+                    # rep count the watch insists on collecting.
+                    "working_reps": [v for v in (set_value(s, timed) for s in working)
+                                     if v is not None],
+                    "total_reps": sum(set_value(s, timed) or 0 for s in sets),
                     "volume": round(
-                        sum((s.get("weight_kg") or 0) * s["reps"] for s in sets), 1
+                        sum((s.get("weight_kg") or 0) * (s.get("reps") or 0)
+                            for s in sets), 1
                     ),
                     "num_sets": len(sets),
                     # sets recorded without a weight against them — a session

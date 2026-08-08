@@ -13,3 +13,6 @@ __pycache__/
 
 .DS_Store
 .pytest_cache/
+
+# Cached sleep/readiness metrics — personal, and re-fetchable
+recovery.json

@@ -52,6 +52,8 @@ def build_parser() -> argparse.ArgumentParser:
     sync_cmd = sub.add_parser("sync", help="pull completed sessions from Garmin Connect")
     sync_cmd.add_argument("limit", nargs="?", type=int, default=30,
                           help="how many recent activities to scan (default 30)")
+    sync_cmd.add_argument("--no-recovery", action="store_true",
+                          help="skip refreshing sleep/readiness metrics")
 
     validate = sub.add_parser("validate", help="check a workout against the Garmin FIT SDK")
     validate.add_argument("workout_file")
@@ -152,9 +154,20 @@ def _run_upload(args) -> None:
 
 
 def _run_sync(args) -> None:
+    from . import recovery
     from .sync import sync
 
     sync(args.limit)
+
+    if not args.no_recovery:
+        print("\nRefreshing recovery metrics (sleep, readiness, body battery)...")
+        try:
+            recovery.fetch()
+            note = recovery.advice()
+            print(f"  {note}" if note else "  nothing notable in the last few days.")
+        except Exception as exc:
+            # Optional data on undocumented endpoints; never fail the sync for it.
+            print(f"  could not read recovery metrics: {exc}")
 
 
 def _run_login(_args) -> None:

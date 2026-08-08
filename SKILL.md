@@ -107,6 +107,21 @@ unlabelled heavy sets that are probably the same lift. Ask the user rather than 
 
 If `performance.json` doesn't exist yet, say so and run `garmin sync` before continuing.
 
+**Adherence — the prescription itself may be wrong.** `garmin coach` flags exercises where
+what was asked for and what happened disagree twice running, as `ADHERENCE: asked for 10, got
+7/7 twice — prescribe 7 next time, not 10`. Follow it. Repeating a target that has been missed
+twice just repeats the miss, and the lifter reads it as failing rather than the number being
+badly set. The same applies upward: consistently beating a target means it is too soft.
+
+**Recovery.** `garmin suggest` prints a `Recovery:` line when sleep or Garmin's training
+readiness is genuinely off. When it fires, prefer holding load or trimming a set over
+progressing, and say why. When it says nothing, nothing is wrong — don't invent a caveat.
+
+**Timed holds.** Planks and similar use `"seconds": 45` instead of `"reps"`. The watch runs the
+timer correctly but still prompts for a rep count afterwards; that number is meaningless and the
+analysis ignores it in favour of the recorded duration. Warn the user once that the rep prompt
+on a plank can be skipped or filled with anything.
+
 **Weight is a suggestion, not a prescription in the file.** Garmin workout steps carry
 exercise/sets/reps/rest only — there's no weight field — so target loads belong in the
 conversation and in the workout `description`, never as a field in the exercise dict.
@@ -531,6 +546,24 @@ per session, not something to code around.
 Do **not**: guess at the data, fall back to generic programming, copy files elsewhere, or tell the
 user the file is missing — it exists, it's just not reachable yet. `performance.json` is also
 gitignored, so it will never appear via a git remote; the local folder is the only source.
+
+### How the user should log weight on the watch
+
+These come up often and the answer matters, because every verdict compares an exercise against
+its own history — so **consistency matters far more than which convention**. Inconsistency
+within one exercise is what produces `check-data` flags.
+
+- **Dumbbells: log ONE dumbbell.** Most of this user's history already does (lateral raise
+  7-12kg, hammer curl 10-12kg, shoulder press 14-18kg). `DUMBBELL_PUSH_PRESS` at 52kg is the
+  odd one out — that is a pair total and breaks the trend for that exercise.
+- **Bodyweight moves (dips, pull-ups): log total load — bodyweight plus anything added.**
+  Garmin often pre-fills bodyweight, so this fights the watch least. Their dip history reads
+  9, 76, 72, 19kg — a mix of both conventions, which is why it is untrustworthy.
+  Whichever they pick, they must not alternate.
+- **Assisted machines**: log the weight actually moved, not the assist.
+
+If they change convention, say the affected exercise will read as a big jump or drop for one
+session and may be flagged `check-data` — that is the guard working, not a bug.
 
 ### Exercise-name gotchas (caused a silent wrong-exercise bug)
 Garmin's naming does not match gym vernacular. Confirmed traps:

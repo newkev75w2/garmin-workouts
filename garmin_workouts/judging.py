@@ -12,6 +12,8 @@ from .constants import (
 )
 from .store import days_since, load_store, prescribed_reps, session_summaries
 
+ADHERENCE_GAP = 3  # reps of slack before a prescription counts as mis-set
+
 
 def load_increment(weight: float | None) -> float:
     """Next sensible jump. Bigger lifts tolerate bigger steps."""
@@ -24,6 +26,38 @@ def load_increment(weight: float | None) -> float:
     if weight >= 12:
         return 2.0
     return 1.0
+
+
+def prescription_advice(sessions: list, target: int | None, unit: str) -> str | None:
+    """
+    Whether the number we asked for matched what actually happened.
+
+    Prescribing 15 and getting 10 every time is not the lifter failing, it is
+    the prescription being wrong — and repeating it just repeats the miss. The
+    same applies upwards: consistently beating the target means the target is
+    too soft. Only fires on a gap wide enough not to be noise, and only when
+    two sessions agree, so one bad day does not rewrite the programme.
+    """
+    if not target:
+        return None
+
+    recent = [s for s in sessions[-2:] if s["working_reps"]]
+    if len(recent) < 2:
+        return None
+
+    achieved = [min(s["working_reps"]) for s in recent]
+    if all(a <= target - ADHERENCE_GAP for a in achieved):
+        realistic = max(achieved)
+        return (
+            f"asked for {target}{unit}, got {'/'.join(str(a) for a in achieved)} "
+            f"twice — prescribe {realistic}{unit} next time, not {target}"
+        )
+    if all(a >= target + ADHERENCE_GAP for a in achieved):
+        return (
+            f"asked for {target}{unit}, got {'/'.join(str(a) for a in achieved)} "
+            f"twice — the target is too soft, raise it or add load"
+        )
+    return None
 
 
 def judge(name: str, sessions: list, targets: dict) -> dict:
@@ -131,9 +165,14 @@ def judge(name: str, sessions: list, targets: dict) -> dict:
     else:
         suggestion = f"hold {w}, complete all sets at {target} reps first"
 
+    unit = latest.get("unit", "reps")
     return {
         "exercise": name,
         "category": latest["category"],
+        "unit": unit,
+        "unit_suffix": "s" if unit == "s" else "",
+        "timed": latest.get("timed", False),
+        "adherence": prescription_advice(sessions, target, "s" if unit == "s" else ""),
         "verdict": verdict,
         "target_reps": target,
         "hit_target": hit_target,

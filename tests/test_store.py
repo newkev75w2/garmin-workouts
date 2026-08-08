@@ -122,3 +122,43 @@ class TestUnlabelledWork:
             an_activity(days_ago(2), "Back", [a_set(None, 6, 80.0)])
         )
         assert st.session_summaries(store) == {}
+
+
+class TestTimedExercises:
+    def test_a_hold_is_measured_in_seconds_not_reps(self):
+        """
+        Garmin collects a rep count even for a timed hold. A real 45-second
+        plank came back as 5, 7 and 12 "reps" with the duration correct at
+        45.0s each — so the duration is the number that means anything.
+        """
+        sets = [
+            {**a_set("_45_DEGREE_PLANK", reps, 73.0, "PLANK"), "duration_s": 45.0}
+            for reps in (5, 7, 12)
+        ]
+        summary = st.session_summaries(
+            a_store(an_activity(days_ago(2), "Core", sets))
+        )["_45_DEGREE_PLANK"][0]
+
+        assert summary["timed"] is True
+        assert summary["unit"] == "s"
+        assert summary["working_reps"] == [45, 45, 45]
+
+    def test_a_rep_exercise_is_unaffected(self):
+        sets = [
+            {**a_set("HANGING_LEG_RAISE", reps, None, "LEG_RAISE"), "duration_s": 30.0}
+            for reps in (7, 7, 5)
+        ]
+        summary = st.session_summaries(
+            a_store(an_activity(days_ago(2), "Core", sets))
+        )["HANGING_LEG_RAISE"][0]
+
+        assert summary["timed"] is False
+        assert summary["working_reps"] == [7, 7, 5]
+
+    def test_a_set_with_no_rep_count_still_counts(self):
+        """Previously dropped entirely, taking real work out of the analysis."""
+        sets = [{**a_set("PLANK", None, None, "PLANK"), "duration_s": 60.0}]
+        summary = st.session_summaries(
+            a_store(an_activity(days_ago(2), "Core", sets))
+        )["PLANK"][0]
+        assert summary["working_reps"] == [60]
