@@ -1,17 +1,20 @@
 ---
 name: garmin-workout
 description: >
-  Plan gym and strength training from the user's own Garmin history — which sits locally in
-  ~/Projects/garmin-workouts along with every completed session, weight and rep they have
-  logged. Use this skill whenever the user asks to create, design, build or plan a workout,
-  lifting session, gym session, training day, push/pull/leg day or programme — including for
-  a named or future day ("design me a workout for Monday", "something for tomorrow") and
+  Plan gym, strength and running training from the user's own Garmin history — which sits
+  locally in ~/Projects/garmin-workouts along with every completed session, weight, rep, run
+  and VO2max reading they have logged. Use this skill whenever the user asks to create,
+  design, build, plan or schedule a workout, lifting session, gym session, run, training day,
+  training week, weekly schedule, routine, split, push/pull/leg day or programme — including
+  for a named or future day ("design me a workout for Monday", "something for tomorrow") and
   WHETHER OR NOT THEY SAY THE WORD GARMIN. Also use it when they ask what to train ("what
-  muscles should I train tomorrow?", "what should I hit today?", "am I due a rest day?"),
-  when they ask how they are progressing on a lift or whether to add weight, and when they
-  mention uploading or syncing a workout to their watch. Because their real training data is
-  on disk, never answer these from general knowledge and never ask what programme, split or
-  goal they follow — read their actual history first and build from it.
+  muscles should I train tomorrow?", "am I due a rest day?"), how to fit running and lifting
+  around each other, how many times a week to train, how their running or cardio is going,
+  what their VO2max is doing, whether a run should be easy or hard, how they are progressing
+  on a lift or whether to add weight, and when they mention uploading or syncing anything to
+  their watch. Because their real training data is on disk, never answer these from general
+  knowledge and never ask what programme, split or goal they follow — read their actual
+  history first and build from it.
 ---
 
 # Garmin Strength Workout Builder
