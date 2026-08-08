@@ -19,3 +19,6 @@ recovery.json
 
 # Synced runs and VO2max series — personal, re-fetchable
 runs.json
+
+# Built skill package — regenerate with `python package_skill.py`
+dist/

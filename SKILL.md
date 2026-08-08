@@ -19,6 +19,8 @@ description: >
 
 # Garmin Strength Workout Builder
 
+**Skill build: v1.4.0**
+
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
 Default duration: **45–50 minutes**. Bodyweight exercises only if they genuinely fit (dips, pull-ups
@@ -62,6 +64,13 @@ Change logic in the package, not in the root scripts. Tests are in `tests/` — 
 `python -m pytest` after touching anything in the package.
 
 **`progress.py` no longer exists** — it was folded into `garmin coach --prescribed`.
+
+**Verifying which build is loaded.** If the user asks what version of the skill you have, or
+says a recent change doesn't seem to be working, report the `Skill build:` version at the top of
+this file. A conversation keeps the skill text it started with, so a chat opened before an update
+will keep using the old instructions no matter how many times the file is reinstalled — the fix
+is a new chat, not another reinstall. Comparing the reported build against what they expect
+settles it in one question.
 
 **Read the Troubleshooting section at the bottom before debugging anything environment-related.**
 It documents real failures already hit and solved — don't rediscover them.
