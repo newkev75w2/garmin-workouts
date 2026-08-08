@@ -120,6 +120,47 @@ def sync_runs(limit: int = 200, client=None) -> dict:
     return {"added": added, "total": len(data["runs"]), "data": data}
 
 
+SUGGESTED_ENDPOINT = "/workout-service/workout/suggested/{sport}"
+
+
+def garmin_suggested(sport: str = "RUNNING", client=None) -> list:
+    """
+    Garmin's own daily suggested workouts, if it has any.
+
+    Garmin generates these from training status and recent training load. It
+    returns an empty list rather than an error when it has nothing to offer —
+    which is the normal case for anyone training too infrequently for it to
+    establish a load trend, so an empty result is not a failure and must not be
+    reported as one.
+    """
+    from .client import get_client
+
+    client = client or get_client()
+    try:
+        result = client.connectapi(SUGGESTED_ENDPOINT.format(sport=sport))
+    except Exception:
+        return []
+    return result if isinstance(result, list) else []
+
+
+def summarise_suggested(item: dict) -> dict:
+    """Flatten one of Garmin's suggestions into the shape the planner uses."""
+    segments = item.get("workoutSegments") or [{}]
+    steps = segments[0].get("workoutSteps") or []
+    seconds = sum(
+        s.get("endConditionValue") or 0
+        for s in steps
+        if (s.get("endCondition") or {}).get("conditionTypeKey") == "time"
+    )
+    return {
+        "name": item.get("workoutName") or "Garmin suggested run",
+        "description": item.get("description") or "",
+        "minutes": round(seconds / 60) if seconds else None,
+        "steps": len(steps),
+        "workout_id": item.get("workoutId"),
+    }
+
+
 def distribution(days: int = 90, max_hr: float | None = None) -> dict:
     """Where the last `days` of running effort actually landed."""
     data = _load()

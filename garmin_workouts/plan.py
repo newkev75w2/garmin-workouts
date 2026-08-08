@@ -89,19 +89,26 @@ def build_week(
     ]
 
     # 1. The quality run anchors the week when the goal is aerobic. Mid-week
-    #    keeps it clear of the weekend and leaves room either side.
+    #    keeps it clear of the weekend and leaves room either side. Garmin's own
+    #    suggestion is preferred when it has one, since it is computed from
+    #    training load this tool cannot see; it usually has none.
+    suggested = [running.summarise_suggested(s) for s in running.garmin_suggested()]
     quality_slots = [2, 5][:quality_runs]
-    for slot in quality_slots:
+    for n, slot in enumerate(quality_slots):
+        pick = suggested[n] if n < len(suggested) else None
         days[slot]["sessions"].append(
             {
                 "type": "run",
                 "intensity": "quality",
-                "minutes": QUALITY_RUN_MINUTES,
-                "detail": "5x3min at ~93% max HR, equal easy recovery",
+                "minutes": (pick and pick["minutes"]) or QUALITY_RUN_MINUTES,
+                "detail": pick["name"] if pick else "5x3min at ~93% max HR, equal easy recovery",
+                "source": "garmin" if pick else "planner",
                 "when": "am",
             }
         )
         days[slot]["notes"].append("anchor session — keep the day around it light")
+        if pick:
+            days[slot]["notes"].append(f"Garmin's own suggestion: {pick['description'][:80]}")
 
     # 2. Legs are kept a clear day away from every quality run, in both
     #    directions, since the interference runs both ways.
@@ -191,15 +198,26 @@ def build_week(
         "goal": goal,
         "start": start,
         "days": days,
-        "rationale": _rationale(goal, quality_runs, easy_runs, strength_days),
+        "suggested_available": len(suggested),
+        "rationale": _rationale(goal, quality_runs, easy_runs, strength_days, len(suggested)),
     }
 
 
-def _rationale(goal: str, quality: int, easy: int, strength: int) -> list:
+def _rationale(goal: str, quality: int, easy: int, strength: int,
+               suggested: int = 0) -> list:
     notes = [
         f"goal '{goal}': {quality} quality run(s), {easy} easy run(s), "
         f"{strength} strength session(s)"
     ]
+
+    if suggested:
+        notes.append(f"using {suggested} of Garmin's own suggested run(s) for the hard days")
+    else:
+        notes.append(
+            "Garmin has no suggested workouts to offer right now — it builds those "
+            "from training load, and there isn't enough recent running for it to have "
+            "a view. Quality sessions below are this tool's own prescription"
+        )
 
     dist = running.distribution()
     if dist and dist.get("runs"):
