@@ -364,7 +364,7 @@ def build_week(
             day["sessions"] = []
         if len(day["sessions"]) == 1:
             day["sessions"][0]["when"] = "any"
-        if not day["sessions"]:
+        if not day["sessions"] and "not available" not in day["notes"]:
             day["notes"].append("full rest")
 
     return {

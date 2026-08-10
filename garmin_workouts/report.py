@@ -242,6 +242,8 @@ def print_plan(goal="vo2max", start=None, strength=None, runs=None, weekdays=Non
                 when = s["when"] if s["when"] != "any" else "—"
                 print(f"  {head}   {when:<3} {kind:<20} {s['minutes']:>3}min  {s['detail']}")
         for note in day["notes"]:
+            if note == "not available":
+                continue  # already shown as the day's state
             print(f"  {' ' * len(label)}        - {note}")
     print()
     for line in week.get("mix_notes", []):
