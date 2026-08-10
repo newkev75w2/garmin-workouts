@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.9.1**
+**Skill build: v1.10.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -206,30 +206,9 @@ route shape:
 - **Laps of a park or a known loop** when they want to stay close to home, or for intervals where
   stopping to check a turn breaks the effort.
 - Ask once where they usually run and reuse it.
-- **Give them a map link so they can see it**: `garmin route <minutes> "<start>" "<turnaround>"`
-  produces a Google Maps walking-directions link alongside the target distance. Walking mode is
-  deliberate — driving directions ignore towpaths and footpaths.
-- **Add `--via` when the run follows a specific path.** A directions engine asked for a canal-side
-  run returns a zigzag through the streets alongside it: right distance, wrong run. One waypoint
-  on the towpath usually fixes it. If the user says the map looks wrong, this is why.
-- **`--draw` measures and draws it.** `garmin route 27 "Paddington Basin" "Little Venice" --draw`
-  geocodes both ends, routes between them on OpenStreetMap's foot profile — which uses towpaths
-  and park paths, not just roads — reports the real distance each way, and opens a drawn map.
-  It also says whether the turnaround is too far or too near for the target, so it converges in
-  one or two tries instead of guessing.
-- **`--follow towpath` keeps them off the road.** A foot router asked to go from A to B takes the
-  shortest walkable line, and beside a canal that is the road alongside — right distance, wrong
-  run. This looks up the named path in OpenStreetMap and routes through it. Use it whenever the
-  user names a canal, river, seafront or park path, and reach for it immediately if they say the
-  route put them on roads.
-- The drawn map opens in a browser, not inline: map tiles come from openstreetmap.org and the
-  inline sandbox blocks external hosts, so an inline version is a page of grey squares.
-- Public OSM services, no key. Fine for personal use; don't loop over them.
-
-Never state a distance between two landmarks as fact. You cannot verify it, and a confident wrong
-number produces a run of the wrong length. Give the target distance from their pace, suggest a
-plausible turnaround, and let the map report the real figure — then adjust the turnaround if it
-comes back long or short. Being approximately right and checkable beats being precisely wrong.
+Never state a distance between two landmarks as fact — you cannot verify it, and a confident
+wrong number produces a run of the wrong length. Give the target distance and the halfway time;
+the athlete turns round when the watch says so, which needs no map and cannot be wrong.
 
 Do not try to build a Garmin course. Garmin Connect already has a course creator with round-trip
 routing; generating routes would need an external mapping service and would be worse.

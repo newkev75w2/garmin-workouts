@@ -72,20 +72,6 @@ def build_parser() -> argparse.ArgumentParser:
                           help="override; otherwise uses your own logged pace")
     dist_cmd.add_argument("--zone", default="easy", choices=["easy", "moderate", "hard"])
 
-    route_cmd = sub.add_parser("route", help="map link for an out-and-back of N minutes")
-    route_cmd.add_argument("minutes", type=float)
-    route_cmd.add_argument("start")
-    route_cmd.add_argument("turnaround")
-    route_cmd.add_argument("--pace", type=float, metavar="MIN_PER_KM")
-    route_cmd.add_argument("--zone", default="easy", choices=["easy", "moderate", "hard"])
-    route_cmd.add_argument("--follow", metavar="PATTERN", nargs="?",
-                           const="towpath|canal|riverside|greenway",
-                           help="keep to named paths, e.g. --follow towpath")
-    route_cmd.add_argument("--draw", action="store_true",
-                           help="draw the route on a real map and open it")
-    route_cmd.add_argument("--via", nargs="+", metavar="PLACE",
-                           help="force the route through these, e.g. --via 'Little Venice'")
-
     lib_cmd = sub.add_parser("workouts", help="local workout files and whether they were used")
     lib_cmd.add_argument("--check-garmin", action="store_true",
                          help="also ask Garmin about files with no upload stamp")
@@ -240,11 +226,6 @@ def _run_distance(args) -> None:
     report.print_distance(args.minutes, args.pace, args.zone)
 
 
-def _run_route(args) -> None:
-    report.print_route(args.minutes, args.start, args.turnaround, args.pace,
-                       args.zone, args.via, args.draw, args.follow)
-
-
 def _run_library(args) -> None:
     from . import library
 
@@ -293,7 +274,6 @@ HANDLERS = {
     "run": _run_running,
     "workouts": _run_library,
     "distance": _run_distance,
-    "route": _run_route,
     "plan": _run_plan,
     "coach": _run_coach,
     "sync": _run_sync,
