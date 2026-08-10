@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.4.1**
+**Skill build: v1.5.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -151,6 +151,13 @@ a week that lists only lifting is not the week the tool produced:
 Time of day is only stated when it matters. A day holding two sessions is marked `am`/`pm` and
 must stay that way — lift first, run second, six hours apart. A day with one session shows `—`,
 meaning any time suits; don't invent a time for it.
+
+**Let the tool pick the split, and say when it disagrees with the user.** `garmin plan` works
+out the week's mix from their history: it caps how fast running volume grows, adds a quality
+session instead of easy volume when VO2max has gone flat, and drops a strength session when
+recovery is poor. `--strength N --runs M` overrides it. When the user overrides, the plan says
+what it would have chosen — pass that on rather than silently agreeing. Being a coach means
+having a view, not just accepting the request.
 
 **Planning a week.** `garmin plan --goal vo2max` lays out seven days across both disciplines.
 It encodes the interference constraints — legs never adjacent to a quality run, easy runs allowed

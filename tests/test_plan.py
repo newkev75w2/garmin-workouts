@@ -54,10 +54,25 @@ class TestShape:
         gaps = [b - a for a, b in zip(trained, trained[1:])]
         assert max(gaps) <= 2, f"training days clustered: {trained}"
 
-    def test_the_goal_sets_the_session_mix(self):
+    def test_the_goal_sets_the_session_mix(self, monkeypatch):
+        """
+        Total run count can converge between goals once the ramp cap bites — at
+        0.7 runs a week everything reduces to "run a bit more". What must still
+        differ is the shape: an aerobic goal buys a quality session, a strength
+        goal buys a lifting one.
+        """
+        monkeypatch.setattr(plan.running, "distribution",
+                            lambda *a, **k: {"runs": 12, "days": 30, "km": 90,
+                                             "easy": 9, "easy_share": 0.75})
+        monkeypatch.setattr(plan.running, "vo2max_trend",
+                            lambda: [("2026-07-01", 40.0), ("2026-08-01", 42.0)])
+        monkeypatch.setattr(plan.recovery, "advice", lambda *a, **k: None)
+
         vo2 = plan.build_week(goal="vo2max", store=a_history())
         lifting = plan.build_week(goal="strength", store=a_history())
-        assert len(sessions_of(vo2, "run")) > len(sessions_of(lifting, "run"))
+
+        assert len(sessions_of(vo2, "run", "quality")) > 0
+        assert len(sessions_of(lifting, "run", "quality")) == 0
         assert len(sessions_of(lifting, "strength")) > len(sessions_of(vo2, "strength"))
 
     def test_a_strength_goal_drops_quality_runs_entirely(self):
@@ -155,3 +170,61 @@ class TestTimeOfDay:
         for day in week["days"]:
             if len(day["sessions"]) > 1:
                 assert {s["when"] for s in day["sessions"]} == {"am", "pm"}
+
+
+class TestMixRecommendation:
+    def test_running_volume_is_ramped_not_jumped(self, monkeypatch):
+        """
+        Asking someone who runs 0.7 times a week for four runs produces a week
+        they abandon. Aerobic fitness responds to consistency; injury and
+        abandonment respond to jumping volume.
+        """
+        monkeypatch.setattr(plan.running, "distribution",
+                            lambda *a, **k: {"runs": 3, "days": 30, "km": 12,
+                                             "easy": 1, "easy_share": 0.3})
+        monkeypatch.setattr(plan.running, "vo2max_trend", lambda: [])
+        monkeypatch.setattr(plan.recovery, "advice", lambda *a, **k: None)
+
+        mix = plan.recommend_mix("vo2max")
+        assert mix["quality"] + mix["easy"] <= 3
+
+    def test_a_flat_vo2max_buys_intensity_not_more_easy_volume(self, monkeypatch):
+        monkeypatch.setattr(plan.running, "distribution",
+                            lambda *a, **k: {"runs": 12, "days": 30, "km": 90,
+                                             "easy": 9, "easy_share": 0.75})
+        monkeypatch.setattr(plan.running, "vo2max_trend",
+                            lambda: [("2026-06-01", 42.0), ("2026-07-01", 42.0),
+                                     ("2026-08-01", 42.0)])
+        monkeypatch.setattr(plan.recovery, "advice", lambda *a, **k: None)
+
+        mix = plan.recommend_mix("vo2max")
+        assert mix["quality"] >= 2
+        assert any("flat" in n for n in mix["notes"])
+
+    def test_an_explicit_split_is_honoured(self):
+        week = plan.build_week(strength_days=4, runs=2, store=a_history())
+        strength = [s for d in week["days"] for s in d["sessions"] if s["type"] == "strength"]
+        runs = [s for d in week["days"] for s in d["sessions"] if s["type"] == "run"]
+        assert len(strength) == 4
+        assert len(runs) == 2
+        assert week["overridden"] is True
+
+
+class TestRestDays:
+    def test_a_busy_week_still_keeps_two_clear_days(self):
+        """
+        Six sessions spread across seven days leaves one rest day. Stacking an
+        easy run onto an upper-body session buys back a second without dropping
+        any work — a hard week with no recovery produces fatigue, not adaptation.
+        """
+        week = plan.build_week(strength_days=4, runs=2, store=a_history())
+        rest = [d for d in week["days"] if not d["sessions"]]
+        assert len(rest) >= plan.MIN_REST_DAYS
+
+    def test_the_long_run_gets_a_day_to_itself(self):
+        """Stacking the volume session behind lifting makes it a tired short run."""
+        week = plan.build_week(store=a_history())
+        for day in week["days"]:
+            longs = [s for s in day["sessions"] if s["intensity"] == "long"]
+            if longs:
+                assert len(day["sessions"]) == 1

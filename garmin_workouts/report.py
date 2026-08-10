@@ -221,11 +221,13 @@ def print_running(days: int = 90) -> None:
         print(f"  - {note}")
 
 
-def print_plan(goal: str = "vo2max", start=None) -> None:
+def print_plan(goal: str = "vo2max", start=None, strength=None, runs=None) -> None:
     """A week laid out, with the reasoning that shaped it."""
     from . import plan as planner
 
-    week = planner.build_week(start=start, goal=goal)
+    week = planner.build_week(
+        start=start, goal=goal, strength_days=strength, runs=runs
+    )
 
     print(f"\nWeek of {week['start']}  —  goal: {week['goal']}\n")
     for day in week["days"]:
@@ -241,5 +243,12 @@ def print_plan(goal: str = "vo2max", start=None) -> None:
         for note in day["notes"]:
             print(f"  {' ' * len(label)}        - {note}")
     print()
+    for line in week.get("mix_notes", []):
+        print(f"  {line}")
+    if week.get("overridden"):
+        print(
+            f"  using your requested split; left to itself it would suggest "
+            f"{week['recommended_strength']} strength session(s)"
+        )
     for line in week["rationale"]:
         print(f"  {line}")

@@ -31,13 +31,30 @@ from datetime import date, timedelta
 
 from . import planning, recovery, running
 
-# Weekly session counts per goal: (quality runs, easy runs, strength sessions).
+# Starting weekly mix per goal: (quality runs, easy runs, strength sessions).
+# recommend_mix() adjusts these against what the athlete is actually doing —
+# a target nobody reaches is worse than a smaller one they hit every week.
 GOALS = {
     "vo2max": (1, 2, 3),
     "endurance": (1, 3, 2),
     "strength": (0, 2, 4),
     "balanced": (1, 2, 3),
 }
+
+# Never ask for more than this many extra runs per week than they currently do.
+# Aerobic fitness responds to consistency; injury and abandonment respond to
+# jumping volume, and a plan nobody follows improves nothing.
+MAX_RUN_RAMP = 1.5
+
+# A VO2max series flat across this many weeks means the current stimulus has
+# stopped working, and more of the same will not restart it.
+PLATEAU_WEEKS = 4
+LONG_RUN_MINUTES = 50
+
+# Two clear days a week. When the session count would leave fewer, easy runs get
+# stacked onto upper-body days rather than eating every rest day — a hard week
+# with no recovery in it produces fatigue, not adaptation.
+MIN_REST_DAYS = 2
 
 LEG_GROUPS = {"legs", "quads", "hamstrings", "glutes"}
 EASY_RUN_MINUTES = 30
@@ -58,6 +75,71 @@ def spread(slots: list, count: int) -> list:
         return list(slots)
     step = len(slots) / count
     return sorted({slots[min(int(i * step), len(slots) - 1)] for i in range(count)})
+
+
+def recommend_mix(goal: str = "vo2max", store: dict | None = None) -> dict:
+    """
+    What this week's split should actually be, given what they have been doing.
+
+    The goal sets an ideal; the athlete's own history sets what is reachable
+    from here. Three adjustments, in order of how often they matter:
+
+      - Ramp. Running frequency is the main lever on VO2max, but asking someone
+        running 0.7 times a week for four runs produces a week they abandon.
+        Increases are capped relative to current frequency.
+      - Plateau. If VO2max has been flat for a month, adding easy volume will
+        not restart it — the missing stimulus is intensity, so a quality session
+        is added ahead of more easy running.
+      - Recovery. Poor sleep or low readiness removes a session rather than
+        pretending the week is free.
+    """
+    quality, easy, strength = GOALS.get(goal, GOALS["balanced"])
+    notes = []
+
+    dist = running.distribution()
+    current_runs = (dist["runs"] / (dist["days"] / 7)) if dist and dist.get("runs") else 0
+
+    ceiling = int(round(current_runs + MAX_RUN_RAMP))
+    if current_runs and (quality + easy) > max(ceiling, 2):
+        target = max(ceiling, 2)
+        while (quality + easy) > target and easy > 1:
+            easy -= 1
+        notes.append(
+            f"currently running {current_runs:.1f}x a week, so this asks for "
+            f"{quality + easy} rather than {GOALS[goal][0] + GOALS[goal][1]} — "
+            "build the habit before the volume"
+        )
+
+    trend = running.vo2max_trend()
+    if len(trend) >= 2:
+        recent = trend[-1][1] - trend[max(0, len(trend) - PLATEAU_WEEKS)][1]
+        if recent <= 0.1 and quality < 2:
+            quality += 1
+            easy = max(1, easy - 1)
+            notes.append(
+                f"VO2max flat at {trend[-1][1]:g} across the last "
+                f"{min(len(trend), PLATEAU_WEEKS)} readings — swapping an easy run "
+                "for a second quality session, since more easy volume will not "
+                "restart a stalled adaptation"
+            )
+        else:
+            notes.append(
+                f"VO2max moving ({trend[0][1]:g} -> {trend[-1][1]:g}) — "
+                "the current stimulus is working, so this keeps its shape"
+            )
+
+    if recovery.advice() and "train as planned" not in (recovery.advice() or ""):
+        if strength > 2:
+            strength -= 1
+            notes.append("recovery is down, so one strength session comes out")
+
+    return {
+        "quality": quality,
+        "easy": easy,
+        "strength": strength,
+        "notes": notes,
+        "current_runs_per_week": round(current_runs, 1),
+    }
 
 
 def week_start(reference: date | None = None, when: str | None = None) -> date:
@@ -88,6 +170,8 @@ def build_week(
     start: date | None = None,
     goal: str = "vo2max",
     store: dict | None = None,
+    strength_days: int | None = None,
+    runs: int | None = None,
 ) -> dict:
     """
     A seven-day template starting from `start` (default tomorrow).
@@ -97,7 +181,17 @@ def build_week(
     twice in a week just because it started out the most neglected.
     """
     start = start or week_start()
-    quality_runs, easy_runs, strength_days = GOALS.get(goal, GOALS["balanced"])
+
+    mix = recommend_mix(goal, store)
+    quality_runs, easy_runs = mix["quality"], mix["easy"]
+    recommended_strength = mix["strength"]
+    strength_days = recommended_strength if strength_days is None else strength_days
+
+    if runs is not None:
+        # Keep at least one quality session when the goal is aerobic; extra runs
+        # beyond that are easy, since that is where volume belongs.
+        quality_runs = min(quality_runs, runs) or (1 if goal != "strength" and runs else 0)
+        easy_runs = max(0, runs - quality_runs)
 
     days = [
         {
@@ -188,15 +282,40 @@ def build_week(
     run_slots = spread(empty, min(easy_runs, len(empty)))
     run_slots += spread(shared, easy_runs - len(run_slots))
 
+    # The longest easy run goes on a day with nothing else, so it can actually be
+    # long. Stacking it behind a lifting session just makes it a tired short run.
+    # Guarantee rest days by stacking rather than spreading. Six sessions across
+    # seven days leaves one clear day; pairing an easy run onto an upper-body
+    # session buys back a second without dropping any work.
+    training_days = {i for i in range(7) if days[i]["sessions"]} | set(run_slots)
+    over_budget = len(training_days) - (7 - MIN_REST_DAYS)
+    if over_budget > 0:
+        movable = [i for i in sorted(run_slots) if not days[i]["sessions"]]
+        hosts = [
+            i for i in range(7)
+            if days[i]["sessions"] and can_take_a_run(i) and i not in run_slots
+        ]
+        for _ in range(min(over_budget, len(movable), len(hosts))):
+            run_slots.remove(movable.pop(0))
+            run_slots.append(hosts.pop(0))
+
+    solo_slots = [i for i in sorted(run_slots) if not days[i]["sessions"]]
+    # With only one easy run in the week it is the volume session by definition.
+    long_slot = solo_slots[-1] if solo_slots and easy_runs >= 1 else None
+
     for index in sorted(run_slots):
         day = days[index]
         strength = next((s for s in day["sessions"] if s["type"] == "strength"), None)
+        is_long = index == long_slot
         day["sessions"].append(
             {
                 "type": "run",
-                "intensity": "easy",
-                "minutes": EASY_RUN_MINUTES,
-                "detail": "conversational pace, below ~78% max HR",
+                "intensity": "long" if is_long else "easy",
+                "minutes": LONG_RUN_MINUTES if is_long else EASY_RUN_MINUTES,
+                "detail": (
+                    "steady aerobic, below ~78% max HR — the week's volume session"
+                    if is_long else "conversational pace, below ~78% max HR"
+                ),
                 "when": "pm" if strength else "am",
             }
         )
@@ -215,6 +334,9 @@ def build_week(
         "goal": goal,
         "start": start,
         "days": days,
+        "mix_notes": mix["notes"],
+        "overridden": strength_days != recommended_strength or runs is not None,
+        "recommended_strength": recommended_strength,
         "rationale": _rationale(goal, quality_runs, easy_runs, strength_days),
     }
 
