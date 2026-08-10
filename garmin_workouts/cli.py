@@ -78,6 +78,8 @@ def build_parser() -> argparse.ArgumentParser:
     route_cmd.add_argument("turnaround")
     route_cmd.add_argument("--pace", type=float, metavar="MIN_PER_KM")
     route_cmd.add_argument("--zone", default="easy", choices=["easy", "moderate", "hard"])
+    route_cmd.add_argument("--via", nargs="+", metavar="PLACE",
+                           help="force the route through these, e.g. --via 'Little Venice'")
 
     lib_cmd = sub.add_parser("workouts", help="local workout files and whether they were used")
     lib_cmd.add_argument("--check-garmin", action="store_true",
@@ -234,7 +236,8 @@ def _run_distance(args) -> None:
 
 
 def _run_route(args) -> None:
-    report.print_route(args.minutes, args.start, args.turnaround, args.pace, args.zone)
+    report.print_route(args.minutes, args.start, args.turnaround, args.pace,
+                       args.zone, args.via)
 
 
 def _run_library(args) -> None:

@@ -98,3 +98,22 @@ class TestRouteLink:
         these runs go.
         """
         assert "travelmode=walking" in running.route_link("a", "b")
+
+
+class TestRouteWaypoints:
+    def test_waypoints_force_the_route_onto_a_path(self):
+        """
+        Without a waypoint a directions engine picks its own way — asked for a
+        canal-side run it returns a zigzag through the streets alongside, which
+        is the right distance but the wrong run.
+        """
+        url = running.route_link("Paddington Basin", "Westbourne Park",
+                                 via=["Little Venice"])
+        assert "waypoints=Little+Venice" in url
+
+    def test_several_waypoints_are_pipe_separated(self):
+        url = running.route_link("A", "B", via=["C", "D"])
+        assert "waypoints=C%7CD" in url
+
+    def test_no_waypoints_leaves_the_url_clean(self):
+        assert "waypoints" not in running.route_link("A", "B")

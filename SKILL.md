@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.8.1**
+**Skill build: v1.8.2**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -209,6 +209,12 @@ route shape:
 - **Give them a map link so they can see it**: `garmin route <minutes> "<start>" "<turnaround>"`
   produces a Google Maps walking-directions link alongside the target distance. Walking mode is
   deliberate — driving directions ignore towpaths and footpaths.
+- **Add `--via` when the run follows a specific path.** A directions engine asked for a canal-side
+  run returns a zigzag through the streets alongside it: right distance, wrong run. One waypoint
+  on the towpath usually fixes it. If the user says the map looks wrong, this is why.
+- For tracing an exact route rather than accepting a directions guess, point them at a drawing
+  tool (On The Go Map, Plotaroute, or Google Maps' own right-click "Measure distance"). Those let
+  them follow the canal or park path precisely; a directions engine never will.
 
 Never state a distance between two landmarks as fact. You cannot verify it, and a confident wrong
 number produces a run of the wrong length. Give the target distance from their pace, suggest a

@@ -309,7 +309,8 @@ def print_distance(minutes: float, pace: float | None = None, zone: str = "easy"
 
 
 def print_route(minutes: float, start: str, turnaround: str,
-                pace: float | None = None, zone: str = "easy") -> None:
+                pace: float | None = None, zone: str = "easy",
+                via: list | None = None) -> None:
     """Distance for the duration, plus a map link that measures the real thing."""
     from . import running
 
@@ -317,5 +318,11 @@ def print_route(minutes: float, start: str, turnaround: str,
     d = running.distance_for(minutes, pace, zone)
     if d["km"]:
         print(f"  Aim to turn round about {d['out_and_back_km']} km out.")
-    print(f"  {running.route_link(start, turnaround)}")
-    print("  Open that to see the real distance — adjust the turnaround if it's off.\n")
+    print(f"  {running.route_link(start, turnaround, via)}")
+    print("  Open that to see the real distance — adjust the turnaround if it's off.")
+    if not via:
+        print("  If it routes through streets rather than the path you run, pass --via.")
+    print("\n  To trace the exact route instead of taking a directions engine's guess:")
+    for name, where in running.DRAWING_TOOLS:
+        print(f"    {name:<30} {where}")
+    print()

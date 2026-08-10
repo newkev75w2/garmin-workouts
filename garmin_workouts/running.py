@@ -204,20 +204,35 @@ def distance_for(minutes: float, pace_min_per_km: float | None = None,
 
 MAPS_URL = "https://www.google.com/maps/dir/?api=1&origin={a}&destination={b}&travelmode=walking"
 
+# Purpose-built running-route drawers. Directions engines route you along the
+# way they think you should walk; these let you trace the path you actually run,
+# which for canals, parks and seafronts is rarely the same thing.
+DRAWING_TOOLS = [
+    ("On The Go Map", "https://onthegomap.com"),
+    ("Plotaroute", "https://www.plotaroute.com"),
+    ("Google Maps measure distance", "right-click the map -> Measure distance"),
+]
 
-def route_link(start: str, turnaround: str) -> str:
+
+def route_link(start: str, turnaround: str, via: list | None = None) -> str:
     """
     A walking-directions link for an out-and-back leg.
 
-    Deliberately a link rather than a drawn map: the map measures the real
-    distance along real paths, which is the number that matters and the one
-    that cannot be guessed from a landmark name. Walking mode is used because
-    it follows towpaths and footpaths that driving directions ignore.
+    `via` forces the route onto a specific path. Without it a directions engine
+    picks its own way — asked for a canal-side run it happily returns a zigzag
+    through the streets alongside, which is the right distance but the wrong
+    run. One waypoint on the towpath usually fixes it.
+
+    Walking mode is used because driving directions ignore towpaths and
+    footpaths entirely.
     """
     import urllib.parse
 
     quote = urllib.parse.quote_plus
-    return MAPS_URL.format(a=quote(start), b=quote(turnaround))
+    url = MAPS_URL.format(a=quote(start), b=quote(turnaround))
+    if via:
+        url += "&waypoints=" + "%7C".join(quote(v) for v in via)
+    return url
 
 
 def vo2max_trend() -> list:
