@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.8.2**
+**Skill build: v1.9.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -212,9 +212,14 @@ route shape:
 - **Add `--via` when the run follows a specific path.** A directions engine asked for a canal-side
   run returns a zigzag through the streets alongside it: right distance, wrong run. One waypoint
   on the towpath usually fixes it. If the user says the map looks wrong, this is why.
-- For tracing an exact route rather than accepting a directions guess, point them at a drawing
-  tool (On The Go Map, Plotaroute, or Google Maps' own right-click "Measure distance"). Those let
-  them follow the canal or park path precisely; a directions engine never will.
+- **`--draw` measures and draws it.** `garmin route 27 "Paddington Basin" "Little Venice" --draw`
+  geocodes both ends, routes between them on OpenStreetMap's foot profile — which uses towpaths
+  and park paths, not just roads — reports the real distance each way, and opens a drawn map.
+  It also says whether the turnaround is too far or too near for the target, so it converges in
+  one or two tries instead of guessing.
+- The drawn map opens in a browser, not inline: map tiles come from openstreetmap.org and the
+  inline sandbox blocks external hosts, so an inline version is a page of grey squares.
+- Public OSM services, no key. Fine for personal use; don't loop over them.
 
 Never state a distance between two landmarks as fact. You cannot verify it, and a confident wrong
 number produces a run of the wrong length. Give the target distance from their pace, suggest a

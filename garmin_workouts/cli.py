@@ -78,6 +78,8 @@ def build_parser() -> argparse.ArgumentParser:
     route_cmd.add_argument("turnaround")
     route_cmd.add_argument("--pace", type=float, metavar="MIN_PER_KM")
     route_cmd.add_argument("--zone", default="easy", choices=["easy", "moderate", "hard"])
+    route_cmd.add_argument("--draw", action="store_true",
+                           help="draw the route on a real map and open it")
     route_cmd.add_argument("--via", nargs="+", metavar="PLACE",
                            help="force the route through these, e.g. --via 'Little Venice'")
 
@@ -237,7 +239,7 @@ def _run_distance(args) -> None:
 
 def _run_route(args) -> None:
     report.print_route(args.minutes, args.start, args.turnaround, args.pace,
-                       args.zone, args.via)
+                       args.zone, args.via, args.draw)
 
 
 def _run_library(args) -> None:

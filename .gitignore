@@ -22,3 +22,6 @@ runs.json
 
 # Built skill package — regenerate with `python package_skill.py`
 dist/
+
+# Drawn route pages — regenerated on demand
+routes/
