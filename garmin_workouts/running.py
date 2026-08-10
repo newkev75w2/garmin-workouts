@@ -202,6 +202,24 @@ def distance_for(minutes: float, pace_min_per_km: float | None = None,
     }
 
 
+MAPS_URL = "https://www.google.com/maps/dir/?api=1&origin={a}&destination={b}&travelmode=walking"
+
+
+def route_link(start: str, turnaround: str) -> str:
+    """
+    A walking-directions link for an out-and-back leg.
+
+    Deliberately a link rather than a drawn map: the map measures the real
+    distance along real paths, which is the number that matters and the one
+    that cannot be guessed from a landmark name. Walking mode is used because
+    it follows towpaths and footpaths that driving directions ignore.
+    """
+    import urllib.parse
+
+    quote = urllib.parse.quote_plus
+    return MAPS_URL.format(a=quote(start), b=quote(turnaround))
+
+
 def vo2max_trend() -> list:
     """[(date, value), ...] oldest first."""
     data = _load()

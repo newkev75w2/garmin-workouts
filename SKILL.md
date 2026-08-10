@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.8.0**
+**Skill build: v1.8.1**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -205,8 +205,15 @@ route shape:
   drifts — which matters more than picking a scenic route.
 - **Laps of a park or a known loop** when they want to stay close to home, or for intervals where
   stopping to check a turn breaks the effort.
-- Ask once where they usually run and reuse it. Don't invent distances between specific
-  landmarks you cannot verify — give the shape and the time, and let the watch measure.
+- Ask once where they usually run and reuse it.
+- **Give them a map link so they can see it**: `garmin route <minutes> "<start>" "<turnaround>"`
+  produces a Google Maps walking-directions link alongside the target distance. Walking mode is
+  deliberate — driving directions ignore towpaths and footpaths.
+
+Never state a distance between two landmarks as fact. You cannot verify it, and a confident wrong
+number produces a run of the wrong length. Give the target distance from their pace, suggest a
+plausible turnaround, and let the map report the real figure — then adjust the turnaround if it
+comes back long or short. Being approximately right and checkable beats being precisely wrong.
 
 Do not try to build a Garmin course. Garmin Connect already has a course creator with round-trip
 routing; generating routes would need an external mapping service and would be worse.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "garmin-workouts"
-version = "1.8.0"
+version = "1.8.1"
 description = "Build Garmin strength workouts from your own training history"
 requires-python = ">=3.9"
 # garminconnect 0.3+ needs Python 3.10+; on 3.9 pip can only reach 0.2.8, which

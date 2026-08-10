@@ -306,3 +306,16 @@ def print_distance(minutes: float, pace: float | None = None, zone: str = "easy"
         f"(~{d['out_and_back_km']} km), then turn round."
     )
     print("  That needs no route planning and self-corrects if the pace drifts.\n")
+
+
+def print_route(minutes: float, start: str, turnaround: str,
+                pace: float | None = None, zone: str = "easy") -> None:
+    """Distance for the duration, plus a map link that measures the real thing."""
+    from . import running
+
+    print_distance(minutes, pace, zone)
+    d = running.distance_for(minutes, pace, zone)
+    if d["km"]:
+        print(f"  Aim to turn round about {d['out_and_back_km']} km out.")
+    print(f"  {running.route_link(start, turnaround)}")
+    print("  Open that to see the real distance — adjust the turnaround if it's off.\n")

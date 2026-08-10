@@ -84,3 +84,17 @@ class TestDistanceFromDuration:
     def test_no_pace_on_record_yields_no_invented_distance(self, monkeypatch):
         monkeypatch.setattr(running, "pace_for", lambda *a, **k: None)
         assert running.distance_for(30)["km"] is None
+
+
+class TestRouteLink:
+    def test_places_are_url_encoded(self):
+        url = running.route_link("Paddington Basin, London", "Little Venice")
+        assert "Paddington+Basin%2C+London" in url
+        assert "Little+Venice" in url
+
+    def test_walking_mode_is_used(self):
+        """
+        Driving directions ignore towpaths and footpaths, which is exactly where
+        these runs go.
+        """
+        assert "travelmode=walking" in running.route_link("a", "b")
