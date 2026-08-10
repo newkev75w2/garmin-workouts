@@ -19,3 +19,6 @@ WORKOUT = {
         {"name": "SIDE_PLANK",                   "category": "PLANK",       "sets": 3, "seconds": 45, "rest_seconds": 45},
     ],
 }
+
+# Uploaded to Garmin Connect — this file is no longer a draft.
+UPLOADED = "2026-08-10T09:50:33+00:00"

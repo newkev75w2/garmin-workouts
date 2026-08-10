@@ -25,3 +25,6 @@ WORKOUT = {
         {"name": "FACE_PULL",                     "category": "ROW",             "sets": 3, "reps": 15, "rest_seconds": 45},
     ],
 }
+
+# Uploaded to Garmin Connect — this file is no longer a draft.
+UPLOADED = "2026-08-10T09:50:33+00:00"

@@ -66,6 +66,12 @@ def build_parser() -> argparse.ArgumentParser:
     plan_cmd.add_argument("--start", metavar="YYYY-MM-DD|today|tomorrow",
                           help="first day (default: the coming Monday)")
 
+    lib_cmd = sub.add_parser("workouts", help="local workout files and whether they were used")
+    lib_cmd.add_argument("--check-garmin", action="store_true",
+                         help="also ask Garmin about files with no upload stamp")
+    lib_cmd.add_argument("--backfill", action="store_true",
+                         help="stamp files uploaded before stamping existed")
+
     run_cmd = sub.add_parser("run", help="running intensity distribution and VO2max")
     run_cmd.add_argument("--days", type=int, default=90,
                          help="how far back to look (default 90)")
@@ -173,6 +179,12 @@ def _run_upload(args) -> None:
 
     history.log_session(str(path), w)
 
+    # Record it on the file too, so a later run knows this is no longer a draft
+    # without having to ask Garmin.
+    from . import library
+
+    library.mark_uploaded(path)
+
 
 def _run_plan(args) -> None:
     from .plan import staleness, week_start
@@ -202,6 +214,15 @@ def _run_plan(args) -> None:
     else:
         start = None
     report.print_plan(args.goal, start, args.strength, args.runs, args.weekdays)
+
+
+def _run_library(args) -> None:
+    from . import library
+
+    if args.backfill:
+        count = library.backfill()
+        print(f"Stamped {count} previously-uploaded file(s).\n")
+    report.print_library(check_remote=args.check_garmin or args.backfill)
 
 
 def _run_running(args) -> None:
@@ -241,6 +262,7 @@ def _run_login(_args) -> None:
 HANDLERS = {
     "suggest": _run_suggest,
     "run": _run_running,
+    "workouts": _run_library,
     "plan": _run_plan,
     "coach": _run_coach,
     "sync": _run_sync,

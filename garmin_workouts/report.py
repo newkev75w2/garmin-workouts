@@ -255,3 +255,36 @@ def print_plan(goal="vo2max", start=None, strength=None, runs=None, weekdays=Non
         )
     for line in week["rationale"]:
         print(f"  {line}")
+
+
+def print_library(check_remote: bool = False) -> None:
+    """Which workout files were used, and which are drafts free to be reused."""
+    from . import library
+
+    entries = library.local_workouts(check_remote)
+    if not entries:
+        print("No workout files yet.")
+        return
+
+    for e in entries:
+        where = []
+        if e["stamped"]:
+            where.append(f"stamped {e['stamped'][:10]}")
+        elif e["in_history"]:
+            where.append("in upload log")
+        elif e["in_garmin"]:
+            where.append("found in Garmin")
+        suffix = f"  ({', '.join(where)})" if where else ""
+        print(f"  {e['status']:<9} {e['file']:<28} {e['name'][:26]:<28}{suffix}")
+
+    drafts = [e for e in entries if e["status"] == "draft"]
+    unknown = [e for e in entries if e["status"] == "unknown"]
+    print()
+    print(
+        f"  {len(entries)} file(s): {len(entries) - len(drafts) - len(unknown)} uploaded, "
+        f"{len(drafts)} draft(s)" + (f", {len(unknown)} unknown" if unknown else "")
+    )
+    if drafts:
+        print("  Drafts get rewritten in place next time you build that pairing.")
+    if unknown:
+        print("  Unknown means Garmin couldn't be reached — those are left alone.")
