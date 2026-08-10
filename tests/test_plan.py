@@ -109,3 +109,49 @@ class TestSpread:
 
     def test_asking_for_none_returns_nothing(self):
         assert plan.spread([0, 1, 2], 0) == []
+
+
+class TestWeekStart:
+    def test_defaults_to_the_coming_monday(self):
+        """
+        A training week is a calendar week. Starting "tomorrow" produced plans
+        running Wednesday to Tuesday, which is awkward to follow and impossible
+        to compare week against week.
+        """
+        from datetime import date
+
+        saturday = date(2026, 8, 8)
+        assert plan.week_start(saturday) == date(2026, 8, 10)
+
+    def test_monday_plans_the_week_you_are_standing_in(self):
+        from datetime import date
+
+        monday = date(2026, 8, 10)
+        assert plan.week_start(monday) == monday
+
+    def test_explicit_tomorrow_still_works(self):
+        from datetime import date
+
+        assert plan.week_start(date(2026, 8, 8), when="tomorrow") == date(2026, 8, 9)
+
+    def test_the_plan_runs_monday_to_sunday(self):
+        from datetime import date
+
+        week = plan.build_week(start=date(2026, 8, 10), store=a_history())
+        assert week["days"][0]["date"].strftime("%A") == "Monday"
+        assert week["days"][-1]["date"].strftime("%A") == "Sunday"
+
+
+class TestTimeOfDay:
+    def test_a_lone_session_is_not_pinned_to_a_time(self):
+        """Saying 'am' for a single session implies a rule that isn't there."""
+        week = plan.build_week(store=a_history())
+        for day in week["days"]:
+            if len(day["sessions"]) == 1:
+                assert day["sessions"][0]["when"] == "any"
+
+    def test_a_shared_day_splits_into_am_and_pm(self):
+        week = plan.build_week(store=a_history())
+        for day in week["days"]:
+            if len(day["sessions"]) > 1:
+                assert {s["when"] for s in day["sessions"]} == {"am", "pm"}

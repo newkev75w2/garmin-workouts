@@ -55,8 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
     plan_cmd.add_argument("--goal", default="vo2max",
                           choices=["vo2max", "endurance", "strength", "balanced"],
                           help="what the week is built around (default vo2max)")
-    plan_cmd.add_argument("--start", metavar="YYYY-MM-DD",
-                          help="first day of the week (default tomorrow)")
+    plan_cmd.add_argument("--start", metavar="YYYY-MM-DD|today|tomorrow",
+                          help="first day (default: the coming Monday)")
 
     run_cmd = sub.add_parser("run", help="running intensity distribution and VO2max")
     run_cmd.add_argument("--days", type=int, default=90,
@@ -167,7 +167,14 @@ def _run_upload(args) -> None:
 
 
 def _run_plan(args) -> None:
-    start = date.fromisoformat(args.start) if args.start else None
+    from .plan import week_start
+
+    if args.start in ("today", "tomorrow"):
+        start = week_start(when=args.start)
+    elif args.start:
+        start = date.fromisoformat(args.start)
+    else:
+        start = None
     report.print_plan(args.goal, start)
 
 

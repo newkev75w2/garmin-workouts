@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: garmin-workouts
-Version: 1.1.0
+Version: 1.4.0
 Summary: Build Garmin strength workouts from your own training history
 Requires-Python: >=3.9
 Requires-Dist: garminconnect>=0.2.8

@@ -60,6 +60,26 @@ def spread(slots: list, count: int) -> list:
     return sorted({slots[min(int(i * step), len(slots) - 1)] for i in range(count)})
 
 
+def week_start(reference: date | None = None, when: str | None = None) -> date:
+    """
+    Which day the plan should begin.
+
+    A training week is a calendar week, so the default is the coming Monday —
+    starting "tomorrow" produced plans running Wednesday to Tuesday, which is
+    awkward to follow and impossible to compare week to week. Monday itself
+    plans the week you are standing in rather than pushing it a week out.
+    """
+    today = reference or date.today()
+    if when in ("today", None) and today.weekday() == 0:
+        return today
+    if when == "today":
+        return today
+    if when == "tomorrow":
+        return today + timedelta(days=1)
+    days_ahead = (7 - today.weekday()) % 7 or 7
+    return today + timedelta(days=days_ahead)
+
+
 def _leg_day(focus: list) -> bool:
     return any(g in LEG_GROUPS for g in focus)
 
@@ -76,7 +96,7 @@ def build_week(
     scheduled back in as `planned`, so the same muscle group is not prescribed
     twice in a week just because it started out the most neglected.
     """
-    start = start or date.today() + timedelta(days=1)
+    start = start or week_start()
     quality_runs, easy_runs, strength_days = GOALS.get(goal, GOALS["balanced"])
 
     days = [
@@ -183,7 +203,11 @@ def build_week(
         if strength:
             day["notes"].append("leave 6+ hours between the two; lift first")
 
+    # Time of day only constrains anything when a day holds two sessions. Saying
+    # "am" for a lone session implies a rule that isn't there.
     for day in days:
+        if len(day["sessions"]) == 1:
+            day["sessions"][0]["when"] = "any"
         if not day["sessions"]:
             day["notes"].append("full rest")
 

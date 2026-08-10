@@ -236,7 +236,8 @@ def print_plan(goal: str = "vo2max", start=None) -> None:
             for i, s in enumerate(day["sessions"]):
                 head = label if i == 0 else " " * len(label)
                 kind = f"{s['type']} ({s['intensity']})"
-                print(f"  {head}   {s['when']:<3} {kind:<20} {s['minutes']:>3}min  {s['detail']}")
+                when = s["when"] if s["when"] != "any" else "—"
+                print(f"  {head}   {when:<3} {kind:<20} {s['minutes']:>3}min  {s['detail']}")
         for note in day["notes"]:
             print(f"  {' ' * len(label)}        - {note}")
     print()

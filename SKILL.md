@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.4.0**
+**Skill build: v1.4.1**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -135,6 +135,22 @@ progressing, and say why. When it says nothing, nothing is wrong — don't inven
 timer correctly but still prompts for a rep count afterwards; that number is meaningless and the
 analysis ignores it in favour of the recorded duration. Warn the user once that the rep prompt
 on a plank can be skipped or filled with anything.
+
+**Any question about a week, a schedule, or "what should I train this week" is a `garmin plan`
+question, not a `garmin suggest` one.** `garmin suggest` answers "what next"; it names muscle
+groups and nothing else. Use `garmin plan` and present the whole week.
+
+When you do, always give **which day** and **when in the day**, and **always include the runs** —
+a week that lists only lifting is not the week the tool produced:
+
+> **Mon** — strength, core + shoulders (48 min)
+> **Wed am** — quality run, 5x3min at ~93% max HR
+> **Wed pm** — nothing; keep the day light around the run
+> **Fri** — easy run, 30 min conversational
+
+Time of day is only stated when it matters. A day holding two sessions is marked `am`/`pm` and
+must stay that way — lift first, run second, six hours apart. A day with one session shows `—`,
+meaning any time suits; don't invent a time for it.
 
 **Planning a week.** `garmin plan --goal vo2max` lays out seven days across both disciplines.
 It encodes the interference constraints — legs never adjacent to a quality run, easy runs allowed
