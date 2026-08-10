@@ -310,7 +310,8 @@ def print_distance(minutes: float, pace: float | None = None, zone: str = "easy"
 
 def print_route(minutes: float, start: str, turnaround: str,
                 pace: float | None = None, zone: str = "easy",
-                via: list | None = None, draw: bool = False) -> None:
+                via: list | None = None, draw: bool = False,
+                follow: str | None = None) -> None:
     """Distance for the duration, plus a map link that measures the real thing."""
     from . import running
 
@@ -326,7 +327,7 @@ def print_route(minutes: float, start: str, turnaround: str,
         from . import mapview, routing
 
         print("  Measuring the real path...")
-        route = routing.out_and_back(start, turnaround, via)
+        route = routing.out_and_back(start, turnaround, via, follow)
         if route is None:
             print("  Could not route that — check the place names, or try --via.\n")
         else:
@@ -339,6 +340,8 @@ def print_route(minutes: float, start: str, turnaround: str,
             )
             print(f"  Measured: {route['leg_km']} km each way, "
                   f"{route['total_km']} km total — {verdict}.")
+            if route.get("followed"):
+                print(f"  Following: {', '.join(dict.fromkeys(route['followed']))}")
             path = mapview.draw(
                 route,
                 f"{minutes:g} min run — {route['total_km']} km",

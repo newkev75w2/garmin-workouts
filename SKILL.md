@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.9.0**
+**Skill build: v1.9.1**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -217,6 +217,11 @@ route shape:
   and park paths, not just roads — reports the real distance each way, and opens a drawn map.
   It also says whether the turnaround is too far or too near for the target, so it converges in
   one or two tries instead of guessing.
+- **`--follow towpath` keeps them off the road.** A foot router asked to go from A to B takes the
+  shortest walkable line, and beside a canal that is the road alongside — right distance, wrong
+  run. This looks up the named path in OpenStreetMap and routes through it. Use it whenever the
+  user names a canal, river, seafront or park path, and reach for it immediately if they say the
+  route put them on roads.
 - The drawn map opens in a browser, not inline: map tiles come from openstreetmap.org and the
   inline sandbox blocks external hosts, so an inline version is a page of grey squares.
 - Public OSM services, no key. Fine for personal use; don't loop over them.
