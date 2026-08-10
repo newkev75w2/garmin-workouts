@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.7.1**
+**Skill build: v1.8.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -195,6 +195,21 @@ session instead of easy volume when VO2max has gone flat, and drops a strength s
 recovery is poor. `--strength N --runs M` overrides it. When the user overrides, the plan says
 what it would have chosen — pass that on rather than silently agreeing. Being a coach means
 having a view, not just accepting the request.
+
+**Always say where to run, not just how long.** A duration means nothing standing at the door.
+Convert it with `garmin distance <minutes>`, which uses their own logged pace, then suggest a
+route shape:
+
+- **Out and back on a linear route** (canal towpath, river path, seafront) is the default. Run
+  half the time out, turn round. It needs no map, no measured loop, and self-corrects if the pace
+  drifts — which matters more than picking a scenic route.
+- **Laps of a park or a known loop** when they want to stay close to home, or for intervals where
+  stopping to check a turn breaks the effort.
+- Ask once where they usually run and reuse it. Don't invent distances between specific
+  landmarks you cannot verify — give the shape and the time, and let the watch measure.
+
+Do not try to build a Garmin course. Garmin Connect already has a course creator with round-trip
+routing; generating routes would need an external mapping service and would be worse.
 
 **A plan is a schedule, not a set of workouts — see "Which flow are you in?" above. After
 presenting it, offer to build one day and wait.**

@@ -288,3 +288,21 @@ def print_library(check_remote: bool = False) -> None:
         print("  Drafts get rewritten in place next time you build that pairing.")
     if unknown:
         print("  Unknown means Garmin couldn't be reached — those are left alone.")
+
+
+def print_distance(minutes: float, pace: float | None = None, zone: str = "easy") -> None:
+    """What a duration means in distance, at the athlete's own pace."""
+    from . import running
+
+    d = running.distance_for(minutes, pace, zone)
+    if not d["km"]:
+        print(f"{minutes:g} min — no pace on record yet for {zone} running; sync some runs first.")
+        return
+
+    mins, secs = int(d["pace"]), round((d["pace"] % 1) * 60)
+    print(f"\n  {minutes:g} min at {mins}:{secs:02d}/km  ->  {d['km']} km")
+    print(
+        f"  Out and back: run {d['out_and_back_minutes']:g} min out "
+        f"(~{d['out_and_back_km']} km), then turn round."
+    )
+    print("  That needs no route planning and self-corrects if the pace drifts.\n")

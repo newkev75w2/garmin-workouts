@@ -157,6 +157,51 @@ def distribution(days: int = 90, max_hr: float | None = None) -> dict:
     }
 
 
+def pace_for(zone: str = "easy", max_hr: float | None = None) -> float | None:
+    """
+    Their real pace in min/km for a given effort, from logged runs.
+
+    Averaged from their own history rather than assumed, because prescribing a
+    distance off a guessed pace produces a run of the wrong length.
+    """
+    data = _load()["runs"]
+    ceiling = max_hr or observed_max_hr(data)
+    if not ceiling:
+        return None
+
+    bands = {"easy": (0, 0.80), "moderate": (0.80, 0.87), "hard": (0.87, 2.0)}
+    low, high = bands.get(zone, bands["easy"])
+    paces = [
+        r["pace_min_per_km"]
+        for r in data.values()
+        if r.get("pace_min_per_km") and r.get("avg_hr")
+        and low <= r["avg_hr"] / ceiling < high
+    ]
+    return round(sum(paces) / len(paces), 2) if paces else None
+
+
+def distance_for(minutes: float, pace_min_per_km: float | None = None,
+                 zone: str = "easy") -> dict:
+    """
+    How far a run of `minutes` should be, and how to run it without a map.
+
+    An out-and-back on a linear route needs no distance at all: run half the
+    time out, then turn round. That is self-correcting, works anywhere, and is
+    why it beats trying to find a loop of exactly the right length.
+    """
+    pace = pace_min_per_km or pace_for(zone)
+    if not pace:
+        return {"minutes": minutes, "pace": None, "km": None}
+
+    return {
+        "minutes": minutes,
+        "pace": pace,
+        "km": round(minutes / pace, 1),
+        "out_and_back_minutes": round(minutes / 2, 1),
+        "out_and_back_km": round(minutes / pace / 2, 1),
+    }
+
+
 def vo2max_trend() -> list:
     """[(date, value), ...] oldest first."""
     data = _load()

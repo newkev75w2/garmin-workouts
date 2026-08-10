@@ -66,6 +66,12 @@ def build_parser() -> argparse.ArgumentParser:
     plan_cmd.add_argument("--start", metavar="YYYY-MM-DD|today|tomorrow",
                           help="first day (default: the coming Monday)")
 
+    dist_cmd = sub.add_parser("distance", help="how far a run of N minutes should be")
+    dist_cmd.add_argument("minutes", type=float)
+    dist_cmd.add_argument("--pace", type=float, metavar="MIN_PER_KM",
+                          help="override; otherwise uses your own logged pace")
+    dist_cmd.add_argument("--zone", default="easy", choices=["easy", "moderate", "hard"])
+
     lib_cmd = sub.add_parser("workouts", help="local workout files and whether they were used")
     lib_cmd.add_argument("--check-garmin", action="store_true",
                          help="also ask Garmin about files with no upload stamp")
@@ -216,6 +222,10 @@ def _run_plan(args) -> None:
     report.print_plan(args.goal, start, args.strength, args.runs, args.weekdays)
 
 
+def _run_distance(args) -> None:
+    report.print_distance(args.minutes, args.pace, args.zone)
+
+
 def _run_library(args) -> None:
     from . import library
 
@@ -263,6 +273,7 @@ HANDLERS = {
     "suggest": _run_suggest,
     "run": _run_running,
     "workouts": _run_library,
+    "distance": _run_distance,
     "plan": _run_plan,
     "coach": _run_coach,
     "sync": _run_sync,

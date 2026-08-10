@@ -65,3 +65,22 @@ class TestAdvice:
 
     def test_no_runs_means_no_opinion(self):
         assert "sync" in running.advice({})[0].lower()
+
+
+class TestDistanceFromDuration:
+    def test_duration_converts_at_the_given_pace(self):
+        d = running.distance_for(27, pace_min_per_km=6.9167)
+        assert d["km"] == 3.9
+
+    def test_out_and_back_is_half_the_time(self):
+        """
+        The point of out-and-back is that it needs no distance at all — run half
+        the time out and turn round, which self-corrects if the pace drifts.
+        """
+        d = running.distance_for(30, pace_min_per_km=7.0)
+        assert d["out_and_back_minutes"] == 15
+        assert d["out_and_back_km"] == round(30 / 7 / 2, 1)
+
+    def test_no_pace_on_record_yields_no_invented_distance(self, monkeypatch):
+        monkeypatch.setattr(running, "pace_for", lambda *a, **k: None)
+        assert running.distance_for(30)["km"] is None

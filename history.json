@@ -197,5 +197,69 @@
         "rest_seconds": 45
       }
     ]
+  },
+  {
+    "date": "2026-08-10T10:07:41+00:00",
+    "file": "workouts/chest_triceps_2.py",
+    "name": "Chest & Triceps 2",
+    "description": "Dumbbell & cable pressing, four triceps angles. No barbell \u2014 joint-friendly, low-risk while readiness is down. ~47 min.",
+    "exercises": [
+      {
+        "name": "INCLINE_DUMBBELL_BENCH_PRESS",
+        "category": "BENCH_PRESS",
+        "sets": 4,
+        "reps": 7,
+        "rest_seconds": 75
+      },
+      {
+        "name": "DUMBBELL_BENCH_PRESS",
+        "category": "BENCH_PRESS",
+        "sets": 4,
+        "reps": 8,
+        "rest_seconds": 75
+      },
+      {
+        "name": "INCLINE_DUMBBELL_FLYE",
+        "category": "FLYE",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "CABLE_CROSSOVER",
+        "category": "FLYE",
+        "sets": 3,
+        "reps": 15,
+        "rest_seconds": 60
+      },
+      {
+        "name": "SEATED_DUMBBELL_OVERHEAD_TRICEPS_EXTENSION",
+        "category": "TRICEPS_EXTENSION",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "CABLE_LYING_TRICEPS_EXTENSION",
+        "category": "TRICEPS_EXTENSION",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "TRICEPS_PRESSDOWN",
+        "category": "TRICEPS_EXTENSION",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "ROPE_PRESSDOWN",
+        "category": "TRICEPS_EXTENSION",
+        "sets": 3,
+        "reps": 15,
+        "rest_seconds": 45
+      }
+    ]
   }
 ]
