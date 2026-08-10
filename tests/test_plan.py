@@ -228,3 +228,37 @@ class TestRestDays:
             longs = [s for s in day["sessions"] if s["intensity"] == "long"]
             if longs:
                 assert len(day["sessions"]) == 1
+
+
+class TestAvailability:
+    def test_days_ruled_out_stay_empty(self):
+        """
+        Scheduling onto a day the athlete has said they cannot train reads as
+        ignoring them, and was the first thing real use turned up.
+        """
+        week = plan.build_week(weekdays="mon-fri", strength_days=4, runs=2,
+                               store=a_history())
+        for day in week["days"][5:]:
+            assert day["sessions"] == []
+
+    def test_the_requested_counts_are_not_exceeded(self):
+        week = plan.build_week(weekdays="mon-fri", strength_days=4, runs=2,
+                               store=a_history())
+        assert len(sessions_of(week, "strength")) == 4
+        assert len(sessions_of(week, "run")) == 2
+
+    def test_a_list_of_days_works_as_well_as_a_range(self):
+        assert plan.parse_weekdays("mon,wed,fri") == {0, 2, 4}
+        assert plan.parse_weekdays("mon-fri") == {0, 1, 2, 3, 4}
+
+    def test_no_constraint_means_the_whole_week(self):
+        assert plan.parse_weekdays(None) == set(range(7))
+
+    def test_nonsense_falls_back_to_the_whole_week_rather_than_nothing(self):
+        assert plan.parse_weekdays("blursday") == set(range(7))
+
+    def test_rest_days_come_out_of_available_days_not_the_calendar(self):
+        week = plan.build_week(weekdays="mon-fri", strength_days=3, runs=1,
+                               store=a_history())
+        working = [d for d in week["days"][:5] if not d["sessions"]]
+        assert len(working) >= 1

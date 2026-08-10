@@ -55,6 +55,10 @@ def build_parser() -> argparse.ArgumentParser:
     plan_cmd.add_argument("--goal", default="vo2max",
                           choices=["vo2max", "endurance", "strength", "balanced"],
                           help="what the week is built around (default vo2max)")
+    plan_cmd.add_argument("--weekdays", metavar="mon-fri",
+                          help="days you can train, e.g. mon-fri or mon,wed,fri")
+    plan_cmd.add_argument("--no-sync", action="store_true",
+                          help="plan from local data without refreshing first")
     plan_cmd.add_argument("--strength", type=int, metavar="N",
                           help="strength sessions this week (default: recommended)")
     plan_cmd.add_argument("--runs", type=int, metavar="N",
@@ -171,7 +175,25 @@ def _run_upload(args) -> None:
 
 
 def _run_plan(args) -> None:
-    from .plan import week_start
+    from .plan import staleness, week_start
+
+    # Plan from current data by default. Asking the athlete to sync first is a
+    # step they should never have to think about, and planning off stale data
+    # quietly produces last week's advice.
+    if not args.no_sync:
+        stale = staleness()
+        if stale:
+            print(f"Local data is behind ({stale}) — syncing first...")
+            try:
+                from . import recovery, running
+                from .sync import sync
+
+                sync(50)
+                running.sync_runs()
+                recovery.fetch()
+                print()
+            except Exception as exc:
+                print(f"  could not refresh: {exc}\n")
 
     if args.start in ("today", "tomorrow"):
         start = week_start(when=args.start)
@@ -179,7 +201,7 @@ def _run_plan(args) -> None:
         start = date.fromisoformat(args.start)
     else:
         start = None
-    report.print_plan(args.goal, start, args.strength, args.runs)
+    report.print_plan(args.goal, start, args.strength, args.runs, args.weekdays)
 
 
 def _run_running(args) -> None:

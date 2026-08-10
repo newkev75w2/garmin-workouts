@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.5.0**
+**Skill build: v1.6.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -151,6 +151,22 @@ a week that lists only lifting is not the week the tool produced:
 Time of day is only stated when it matters. A day holding two sessions is marked `am`/`pm` and
 must stay that way — lift first, run second, six hours apart. A day with one session shows `—`,
 meaning any time suits; don't invent a time for it.
+
+**Never write a workout without offering choices first.** This holds everywhere, including
+inside a weekly plan. `garmin plan` decides the *schedule* — which day, which muscle groups,
+easy or quality. It does not decide the *exercises*. When the user wants any day built out, go
+to Step 3 and offer three genuinely different options, then wait for them to pick. Presenting a
+finished workout they never chose is the single most common complaint about this skill; the
+plan naming "Tue: triceps + chest" is the input to that conversation, not a substitute for it.
+
+**Respect the days the user says they can train.** If they say Monday to Friday, pass
+`--weekdays mon-fri`. Never schedule onto a day they've ruled out, and never quietly exceed the
+session count they asked for — `--strength 4 --runs 2` means exactly that.
+
+**Sync before planning; don't ask them to.** `garmin plan` refreshes automatically when local
+data is behind, so just run it. Asking the user to run `garmin sync` themselves is a step they
+should never have to think about, and planning off stale data quietly produces last week's
+advice — a run that moved their VO2max is exactly the thing that should change the plan.
 
 **Let the tool pick the split, and say when it disagrees with the user.** `garmin plan` works
 out the week's mix from their history: it caps how fast running volume grows, adds a quality

@@ -56,6 +56,30 @@ LONG_RUN_MINUTES = 50
 # with no recovery in it produces fatigue, not adaptation.
 MIN_REST_DAYS = 2
 
+WEEKDAY_NAMES = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+
+def parse_weekdays(spec: str | None) -> set:
+    """
+    Which weekdays are available to train, from "mon-fri" or "mon,wed,fri".
+
+    Without this the planner used all seven days and quietly scheduled onto days
+    the athlete had already said were unavailable, which reads as ignoring them.
+    """
+    if not spec:
+        return set(range(7))
+    spec = spec.lower().replace(" ", "")
+    chosen: set = set()
+    for part in spec.split(","):
+        if "-" in part:
+            start, end = part.split("-", 1)
+            if start in WEEKDAY_NAMES and end in WEEKDAY_NAMES:
+                a, b = WEEKDAY_NAMES.index(start), WEEKDAY_NAMES.index(end)
+                chosen.update(range(a, b + 1) if a <= b else list(range(a, 7)) + list(range(0, b + 1)))
+        elif part in WEEKDAY_NAMES:
+            chosen.add(WEEKDAY_NAMES.index(part))
+    return chosen or set(range(7))
+
 LEG_GROUPS = {"legs", "quads", "hamstrings", "glutes"}
 EASY_RUN_MINUTES = 30
 QUALITY_RUN_MINUTES = 40
@@ -172,6 +196,7 @@ def build_week(
     store: dict | None = None,
     strength_days: int | None = None,
     runs: int | None = None,
+    weekdays: str | None = None,
 ) -> dict:
     """
     A seven-day template starting from `start` (default tomorrow).
@@ -202,9 +227,18 @@ def build_week(
         for n in range(7)
     ]
 
+    # Index positions are relative to the start day, which is a Monday, so they
+    # line up with weekday numbers directly.
+    allowed = parse_weekdays(weekdays)
+    unavailable = [n for n in range(7) if n not in allowed]
+    for n in unavailable:
+        days[n]["notes"].append("not available")
+
     # 1. The quality run anchors the week when the goal is aerobic. Mid-week
     #    keeps it clear of the weekend and leaves room either side.
-    quality_slots = [2, 5][:quality_runs]
+    usable = sorted(allowed)
+    mid = [n for n in (2, 5) if n in allowed] or usable
+    quality_slots = mid[:quality_runs]
     for slot in quality_slots:
         days[slot]["sessions"].append(
             {
@@ -225,7 +259,7 @@ def build_week(
 
     # 3. Strength days fill the gaps, choosing focus by deficit as we go.
     planned_groups: list = []
-    available = [n for n in range(7) if n not in quality_slots]
+    available = [n for n in usable if n not in quality_slots]
     # Ask for more candidate days than sessions needed. A day can be skipped
     # when every muscle group is still inside its recovery window, and without
     # slack that skip silently costs a session the goal asked for.
@@ -277,8 +311,8 @@ def build_week(
 
     # Prefer days with nothing on them, so easy volume also breaks up the week,
     # and only double up with an upper-body session once those run out.
-    empty = [n for n in range(7) if can_take_a_run(n) and not days[n]["sessions"]]
-    shared = [n for n in range(7) if can_take_a_run(n) and days[n]["sessions"]]
+    empty = [n for n in usable if can_take_a_run(n) and not days[n]["sessions"]]
+    shared = [n for n in usable if can_take_a_run(n) and days[n]["sessions"]]
     run_slots = spread(empty, min(easy_runs, len(empty)))
     run_slots += spread(shared, easy_runs - len(run_slots))
 
@@ -287,12 +321,13 @@ def build_week(
     # Guarantee rest days by stacking rather than spreading. Six sessions across
     # seven days leaves one clear day; pairing an easy run onto an upper-body
     # session buys back a second without dropping any work.
-    training_days = {i for i in range(7) if days[i]["sessions"]} | set(run_slots)
-    over_budget = len(training_days) - (7 - MIN_REST_DAYS)
+    training_days = {i for i in usable if days[i]["sessions"]} | set(run_slots)
+    # Rest days come out of the days actually available, not the calendar week.
+    over_budget = len(training_days) - max(1, len(usable) - MIN_REST_DAYS)
     if over_budget > 0:
         movable = [i for i in sorted(run_slots) if not days[i]["sessions"]]
         hosts = [
-            i for i in range(7)
+            i for i in usable
             if days[i]["sessions"] and can_take_a_run(i) and i not in run_slots
         ]
         for _ in range(min(over_budget, len(movable), len(hosts))):
@@ -324,7 +359,9 @@ def build_week(
 
     # Time of day only constrains anything when a day holds two sessions. Saying
     # "am" for a lone session implies a rule that isn't there.
-    for day in days:
+    for n, day in enumerate(days):
+        if n in unavailable and day["sessions"]:
+            day["sessions"] = []
         if len(day["sessions"]) == 1:
             day["sessions"][0]["when"] = "any"
         if not day["sessions"]:
@@ -339,6 +376,28 @@ def build_week(
         "recommended_strength": recommended_strength,
         "rationale": _rationale(goal, quality_runs, easy_runs, strength_days),
     }
+
+
+def staleness() -> str | None:
+    """
+    Whether the local copy is behind Garmin.
+
+    Planning off yesterday's data silently produces last week's advice — a run
+    that moved VO2max is exactly the thing that should change the plan. Better
+    to sync than to ask the athlete to.
+    """
+    from . import store as _store
+
+    try:
+        activities = _store.load_store().get("activities", {})
+    except SystemExit:
+        return "nothing synced yet"
+    if not activities:
+        return "nothing synced yet"
+
+    latest = max(a["date"] for a in activities.values())
+    behind = (date.today() - date.fromisoformat(latest)).days
+    return f"last synced session is {behind} days old" if behind >= 2 else None
 
 
 def _rationale(goal: str, quality: int, easy: int, strength: int) -> list:
