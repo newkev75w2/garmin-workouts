@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.7.0**
+**Skill build: v1.7.1**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -78,6 +78,34 @@ It documents real failures already hit and solved — don't rediscover them.
 ---
 
 ## Workflow
+
+### Which flow are you in?
+
+There are two, and they are not the same request. Getting this wrong is the most common failure
+of this skill.
+
+**Flow A — plan a week** ("plan my week", "what should I train this week", "how do I fit running
+in"). Produces a *schedule*: which day, which muscle groups, easy or quality run. Run
+`garmin plan`, present the week, and **stop there**. A schedule is not a workout. Do not write
+any workout file, and do not invent exercises for the days.
+
+Then say, in these words or close to them:
+
+> "That's the shape of the week. Want me to build Monday's session? I'll give you three options
+> to pick from."
+
+**Flow B — build one session** ("build Monday's workout", "make me a chest day", or the user
+accepting the offer above). This is the numbered Step 0–5 sequence below, and **Step 3 is not
+optional**: offer three genuinely different options and wait for a choice before writing anything.
+
+**Flow A always hands off to Flow B — once per day, one day at a time.** Never run Flow B for
+seven days unprompted. A week of finished workouts the user never chose is exactly the complaint
+this structure exists to prevent: they wanted options and got decisions.
+
+If the user asks for a week and you find yourself listing exercises, you have skipped the
+handoff — go back and offer.
+
+---
 
 ### Step 0 — Pull performance and let it drive the programming
 
@@ -152,13 +180,6 @@ Time of day is only stated when it matters. A day holding two sessions is marked
 must stay that way — lift first, run second, six hours apart. A day with one session shows `—`,
 meaning any time suits; don't invent a time for it.
 
-**Never write a workout without offering choices first.** This holds everywhere, including
-inside a weekly plan. `garmin plan` decides the *schedule* — which day, which muscle groups,
-easy or quality. It does not decide the *exercises*. When the user wants any day built out, go
-to Step 3 and offer three genuinely different options, then wait for them to pick. Presenting a
-finished workout they never chose is the single most common complaint about this skill; the
-plan naming "Tue: triceps + chest" is the input to that conversation, not a substitute for it.
-
 **Respect the days the user says they can train.** If they say Monday to Friday, pass
 `--weekdays mon-fri`. Never schedule onto a day they've ruled out, and never quietly exceed the
 session count they asked for — `--strength 4 --runs 2` means exactly that.
@@ -174,6 +195,9 @@ session instead of easy volume when VO2max has gone flat, and drops a strength s
 recovery is poor. `--strength N --runs M` overrides it. When the user overrides, the plan says
 what it would have chosen — pass that on rather than silently agreeing. Being a coach means
 having a view, not just accepting the request.
+
+**A plan is a schedule, not a set of workouts — see "Which flow are you in?" above. After
+presenting it, offer to build one day and wait.**
 
 **Planning a week.** `garmin plan --goal vo2max` lays out seven days across both disciplines.
 It encodes the interference constraints — legs never adjacent to a quality run, easy runs allowed
@@ -252,7 +276,10 @@ This is volume/rep progression based on what was actually programmed before, not
 progression — this project doesn't read back actual weight lifted from Garmin Connect's activity
 data, so don't claim to know what weight the user used.
 
-### Step 3 — Offer 3 workout options
+### Step 3 — Offer 3 workout options  (never skip this)
+
+**Stop and offer. Do not write a file in this step.** Whether the user asked for a single session
+or accepted a day from a weekly plan, they choose the exercises — you don't.
 
 Present three distinct options. **Each option must use a meaningfully different set of exercises**
 for the same muscle groups — not just the same movements with different rep counts. Think of it as

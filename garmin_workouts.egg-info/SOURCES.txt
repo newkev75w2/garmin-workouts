@@ -6,6 +6,7 @@ garmin_workouts/client.py
 garmin_workouts/constants.py
 garmin_workouts/history.py
 garmin_workouts/judging.py
+garmin_workouts/library.py
 garmin_workouts/paths.py
 garmin_workouts/plan.py
 garmin_workouts/planning.py
@@ -24,6 +25,7 @@ garmin_workouts.egg-info/requires.txt
 garmin_workouts.egg-info/top_level.txt
 tests/test_adherence.py
 tests/test_judging.py
+tests/test_library.py
 tests/test_paths.py
 tests/test_plan.py
 tests/test_planning.py
