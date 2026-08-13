@@ -77,6 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
                          help="also ask Garmin about files with no upload stamp")
     lib_cmd.add_argument("--watch", action="store_true",
                          help="how full the watch is, and what is safe to remove")
+    lib_cmd.add_argument("--cleanup", action="store_true",
+                         help="delete the safest workouts to free watch slots (asks first)")
+    lib_cmd.add_argument("--keep-free", type=int, default=5, metavar="N",
+                         help="how many spare slots to aim for (default 5)")
+    lib_cmd.add_argument("--yes", action="store_true",
+                         help="skip the confirmation prompt")
     lib_cmd.add_argument("--backfill", action="store_true",
                          help="stamp files uploaded before stamping existed")
 
@@ -243,6 +249,10 @@ def _run_distance(args) -> None:
 
 def _run_library(args) -> None:
     from . import library
+
+    if args.cleanup:
+        report.run_cleanup(args.keep_free, args.yes)
+        return
 
     if args.watch:
         report.print_crowding()

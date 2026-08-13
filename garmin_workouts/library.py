@@ -250,3 +250,54 @@ def crowding(entries: list | None = None, limit: int | None = None) -> dict:
         "duplicates": duplicates,
         "unused": unused,
     }
+
+
+def delete_workout(workout_id: int, client=None) -> bool:
+    """
+    Remove one workout from Garmin Connect. Irreversible.
+
+    Callers must have confirmed with the athlete first — there is no undo, and
+    the evidence this tool has for "unused" is a name match, which is not proof.
+    """
+    from .client import get_client
+
+    try:
+        client = client or get_client()
+        client.connectapi(f"/workout-service/workout/{workout_id}", method="DELETE")
+        return True
+    except Exception:
+        return False
+
+
+def cleanup(keep_free: int = 5, confirm=None, client=None) -> dict:
+    """
+    Free up slots by removing the safest workouts, once confirmed.
+
+    `confirm` is called with the list about to be removed and must return True;
+    without it nothing is deleted. Only ever removes as many as are needed to
+    leave `keep_free` slots, starting with exact duplicates — deleting more than
+    necessary is not tidying, it is losing sessions.
+    """
+    entries = remote_workouts(client)
+    state = crowding(entries)
+
+    needed = state["count"] - (state["limit"] - keep_free)
+    if needed <= 0:
+        return {"needed": 0, "deleted": [], "failed": [], "state": state}
+
+    # Only ever touch things with a positive reason to go.
+    safe = state["duplicates"] + state["unused"]
+    doomed = safe[:needed]
+
+    if not doomed:
+        return {"needed": needed, "deleted": [], "failed": [], "state": state,
+                "note": "nothing safe to remove — every workout has been used"}
+
+    if confirm is None or not confirm(doomed):
+        return {"needed": needed, "deleted": [], "failed": [], "state": state,
+                "note": "cancelled"}
+
+    deleted, failed = [], []
+    for entry in doomed:
+        (deleted if delete_workout(entry["id"], client) else failed).append(entry)
+    return {"needed": needed, "deleted": deleted, "failed": failed, "state": state}

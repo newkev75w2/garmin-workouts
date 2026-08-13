@@ -341,3 +341,40 @@ def print_crowding() -> None:
     print("\n  Delete them in Garmin Connect (Training > Workouts). This tool won't do it:")
     print("  deletion is irreversible, and a name match is not strong enough evidence")
     print("  to remove something on your behalf.\n")
+
+
+def run_cleanup(keep_free: int = 5, assume_yes: bool = False) -> None:
+    """Free up watch slots, asking first."""
+    from . import library
+
+    def confirm(doomed):
+        print(f"\n  About to permanently delete {len(doomed)} workout(s) from Garmin:")
+        for e in doomed:
+            why = "duplicate" if e["duplicate"] else "never completed"
+            print(f"    {e['name'][:38]:<40} {e['updated']}  ({why})")
+        print("\n  This cannot be undone.")
+        if assume_yes:
+            return True
+        try:
+            return input("  Type 'delete' to confirm: ").strip().lower() == "delete"
+        except EOFError:
+            return False
+
+    result = library.cleanup(keep_free=keep_free, confirm=confirm)
+    state = result["state"]
+
+    if result["needed"] <= 0:
+        print(f"\n  {state['count']}/{state['limit']} workouts — no cleanup needed.\n")
+        return
+    if result.get("note") == "cancelled":
+        print("  Cancelled, nothing deleted.\n")
+        return
+    if result.get("note"):
+        print(f"\n  {result['note']}.")
+        print("  Remove one yourself in Garmin Connect to make room.\n")
+        return
+
+    print(f"\n  Deleted {len(result['deleted'])} workout(s).")
+    for e in result["failed"]:
+        print(f"    failed: {e['name']}")
+    print()

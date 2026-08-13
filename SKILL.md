@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.12.0**
+**Skill build: v1.13.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -405,10 +405,16 @@ The cap belongs to the device, not the account: everything synced to the watch c
 got there. fenix 6 and 7 are documented at 25; the fenix 8 number is not confirmed, so the tool
 assumes 25 and `GARMIN_WORKOUT_LIMIT` overrides it once the watch says otherwise.
 
-**Never delete a workout for the user.** Deletion is irreversible, and "never completed" rests on
-a name match — a renamed workout reads as unused. List the candidates and let them delete in
-Garmin Connect. There is also no scheduling trick that avoids the cap; uploaded workouts carry no
-date.
+`garmin workouts --cleanup` frees slots by deleting the safest candidates, but **always shows what
+it will remove and requires the user to type `delete` first**. Never pass `--yes` on their behalf,
+and never delete without showing the list — deletion is irreversible, and "never completed" rests
+on a name match, so a renamed workout reads as unused.
+
+It removes only as many as needed to leave five free slots, duplicates first, and **never touches
+a workout that was actually completed** even when the account is over the limit. Making room by
+deleting a session they did is the athlete's call, not the tool's.
+
+There is also no scheduling trick that avoids the cap; uploaded workouts carry no date.
 
 ### Step 5 — Upload
 

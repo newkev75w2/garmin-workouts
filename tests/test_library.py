@@ -143,3 +143,58 @@ class TestWatchCrowding:
     def test_the_limit_can_be_overridden_per_device(self):
         """Watch models differ, and the fenix 8 figure is not confirmed."""
         assert library.crowding(self._entries(30), limit=50)["over"] is False
+
+
+class TestCleanup:
+    def _state(self, monkeypatch, entries):
+        monkeypatch.setattr(library, "remote_workouts", lambda client=None: entries)
+        deleted = []
+        monkeypatch.setattr(library, "delete_workout",
+                            lambda wid, client=None: deleted.append(wid) or True)
+        return deleted
+
+    def _entries(self, used=0, duplicates=0, unused=0):
+        out = [{"id": i, "name": f"W{i}", "updated": "2026-08-01",
+                "completed": True, "duplicate": False} for i in range(used)]
+        out += [{"id": 900 + i, "name": "W0", "updated": "2026-07-01",
+                 "completed": True, "duplicate": True} for i in range(duplicates)]
+        out += [{"id": 800 + i, "name": f"U{i}", "updated": "2026-07-01",
+                 "completed": False, "duplicate": False} for i in range(unused)]
+        return out
+
+    def test_nothing_happens_when_there_is_room(self, monkeypatch):
+        deleted = self._state(monkeypatch, self._entries(used=5))
+        result = library.cleanup(confirm=lambda d: True)
+        assert result["needed"] <= 0 and deleted == []
+
+    def test_nothing_is_deleted_without_confirmation(self, monkeypatch):
+        """The confirm callback is the only door; absent it, nothing goes."""
+        deleted = self._state(monkeypatch, self._entries(used=20, duplicates=3))
+        library.cleanup(confirm=None)
+        assert deleted == []
+
+    def test_declining_deletes_nothing(self, monkeypatch):
+        deleted = self._state(monkeypatch, self._entries(used=20, duplicates=3))
+        result = library.cleanup(confirm=lambda d: False)
+        assert deleted == [] and result["note"] == "cancelled"
+
+    def test_only_as_many_as_needed_are_removed(self, monkeypatch):
+        """Deleting more than necessary is not tidying, it is losing sessions."""
+        deleted = self._state(monkeypatch, self._entries(used=18, duplicates=5))
+        library.cleanup(keep_free=5, confirm=lambda d: True)
+        assert len(deleted) == 3  # 23 present, limit 25, want 5 free -> drop 3
+
+    def test_duplicates_go_before_never_completed(self, monkeypatch):
+        deleted = self._state(monkeypatch, self._entries(used=20, duplicates=1, unused=2))
+        library.cleanup(keep_free=5, confirm=lambda d: True)
+        assert deleted[0] == 900
+
+    def test_a_used_workout_is_never_touched(self, monkeypatch):
+        """
+        Even when the account is over the limit, a completed session is not
+        deleted to make room — that is the athlete's call, not the tool's.
+        """
+        deleted = self._state(monkeypatch, self._entries(used=30))
+        result = library.cleanup(confirm=lambda d: True)
+        assert deleted == []
+        assert "nothing safe" in result["note"]
