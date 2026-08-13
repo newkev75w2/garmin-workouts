@@ -405,6 +405,10 @@ The cap belongs to the device, not the account: everything synced to the watch c
 got there. fenix 6 and 7 are documented at 25; the fenix 8 number is not confirmed, so the tool
 assumes 25 and `GARMIN_WORKOUT_LIMIT` overrides it once the watch says otherwise.
 
+`garmin plan` and `garmin upload` both check capacity themselves — the plan says whether the
+week's sessions will fit before anything is built, and the upload warns before consuming a slot.
+Pass that on when it appears; don't wait for the watch to refuse an upload.
+
 `garmin workouts --cleanup` frees slots by deleting the safest candidates, but **always shows what
 it will remove and requires the user to type `delete` first**. Never pass `--yes` on their behalf,
 and never delete without showing the list — deletion is irreversible, and "never completed" rests

@@ -245,6 +245,26 @@ def print_plan(goal="vo2max", start=None, strength=None, runs=None, weekdays=Non
             if note == "not available":
                 continue  # already shown as the day's state
             print(f"  {' ' * len(label)}        - {note}")
+    sessions = sum(
+        1 for d in week["days"] for s in d["sessions"] if s["type"] == "strength"
+    )
+    try:
+        from . import library
+
+        state = library.crowding()
+        if state["count"] and state["count"] + sessions > state["limit"]:
+            print(
+                f"\n  Watch capacity: {state['count']}/{state['limit']} used, and this week "
+                f"needs {sessions} more. Run `garmin workouts --cleanup` before uploading."
+            )
+        elif state["count"] and state["crowded"]:
+            print(
+                f"\n  Watch capacity: {state['count']}/{state['limit']} used — "
+                f"room for {state['limit'] - state['count']} more."
+            )
+    except Exception:
+        pass  # capacity is a courtesy; never let it break the plan
+
     print()
     for line in week.get("mix_notes", []):
         print(f"  {line}")

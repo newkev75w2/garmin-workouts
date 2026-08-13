@@ -196,6 +196,18 @@ def _run_upload(args) -> None:
 
     client = get_client()
     print(f"Connected as: {client.get_full_name()}")
+
+    # Check before consuming a slot, not after the watch refuses one.
+    from . import library
+
+    state = library.crowding(library.remote_workouts(client))
+    if state["count"] and (state["crowded"] or state["over"]):
+        print(
+            f"  Note: {state['count']}/{state['limit']} workouts on the watch"
+            f"{' — over the limit' if state['over'] else ''}. "
+            "Run `garmin workouts --cleanup` to free some."
+        )
+
     print(f"Uploading '{w['name']}'...")
     result = client.connectapi(
         "/workout-service/workout", method="POST", json=wk.build_payload(w)

@@ -262,3 +262,31 @@ class TestAvailability:
                                store=a_history())
         working = [d for d in week["days"][:5] if not d["sessions"]]
         assert len(working) >= 1
+
+
+class TestCapacityWarning:
+    def test_a_week_that_will_not_fit_is_flagged(self, monkeypatch, capsys):
+        """
+        Finding out the watch is full when it refuses the fourth upload is too
+        late — the week is planned before anything is built.
+        """
+        from garmin_workouts import library, report
+
+        monkeypatch.setattr(library, "crowding",
+                            lambda *a, **k: {"count": 14, "limit": 16,
+                                             "crowded": True, "over": False})
+        monkeypatch.setattr(report, "print_suggestion", lambda *a, **k: None)
+        report.print_plan("vo2max")
+        out = capsys.readouterr().out
+        assert "Watch capacity" in out and "cleanup" in out
+
+    def test_capacity_trouble_never_breaks_the_plan(self, monkeypatch, capsys):
+        """It is a courtesy; a plan is still useful when Garmin is unreachable."""
+        from garmin_workouts import library, report
+
+        def boom(*a, **k):
+            raise RuntimeError("garmin unreachable")
+
+        monkeypatch.setattr(library, "crowding", boom)
+        report.print_plan("vo2max")
+        assert "goal" in capsys.readouterr().out
