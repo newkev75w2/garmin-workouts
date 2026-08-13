@@ -75,6 +75,8 @@ def build_parser() -> argparse.ArgumentParser:
     lib_cmd = sub.add_parser("workouts", help="local workout files and whether they were used")
     lib_cmd.add_argument("--check-garmin", action="store_true",
                          help="also ask Garmin about files with no upload stamp")
+    lib_cmd.add_argument("--watch", action="store_true",
+                         help="how full the watch is, and what is safe to remove")
     lib_cmd.add_argument("--backfill", action="store_true",
                          help="stamp files uploaded before stamping existed")
 
@@ -241,6 +243,10 @@ def _run_distance(args) -> None:
 
 def _run_library(args) -> None:
     from . import library
+
+    if args.watch:
+        report.print_crowding()
+        return
 
     if args.backfill:
         count = library.backfill()

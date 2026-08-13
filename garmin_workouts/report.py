@@ -306,3 +306,38 @@ def print_distance(minutes: float, pace: float | None = None, zone: str = "easy"
         f"(~{d['out_and_back_km']} km), then turn round."
     )
     print("  That needs no route planning and self-corrects if the pace drifts.\n")
+
+
+def print_crowding() -> None:
+    """How full the watch is, and what is safest to remove."""
+    from . import library
+
+    state = library.crowding()
+    if not state["count"]:
+        print("Could not read your Garmin workouts.")
+        return
+
+    headroom = state["limit"] - state["count"]
+    print(f"\n  {state['count']} workouts in Garmin Connect, watch limit ~{state['limit']} "
+          f"({headroom} spare)")
+
+    if state["duplicates"]:
+        print("\n  Duplicate names — safe to remove, you have another copy:")
+        for e in state["duplicates"]:
+            print(f"    {e['name'][:38]:<40} {e['updated']}")
+
+    if state["unused"]:
+        print("\n  Never completed — likely safe, but check you weren't saving it:")
+        for e in state["unused"]:
+            print(f"    {e['name'][:38]:<40} {e['updated']}")
+
+    if state["over"]:
+        print("\n  Over the limit — the watch will refuse new workouts until you clear some.")
+    elif state["crowded"]:
+        print("\n  Getting close. Clear a few before the watch starts refusing new ones.")
+    else:
+        print("\n  Plenty of room.")
+
+    print("\n  Delete them in Garmin Connect (Training > Workouts). This tool won't do it:")
+    print("  deletion is irreversible, and a name match is not strong enough evidence")
+    print("  to remove something on your behalf.\n")

@@ -102,3 +102,44 @@ class TestTargetPath:
         path, reused = library.target_path("chest_shoulders")
         assert path.name == "chest_shoulders_1.py"
         assert reused is False
+
+
+class TestWatchCrowding:
+    def _entries(self, n, duplicates=0, unused=0):
+        out = []
+        for i in range(n):
+            out.append({"id": i, "name": f"W{i}", "updated": "2026-08-01",
+                        "completed": True, "duplicate": False})
+        for i in range(duplicates):
+            out.append({"id": 900 + i, "name": "W0", "updated": "2026-07-01",
+                        "completed": True, "duplicate": True})
+        for i in range(unused):
+            out.append({"id": 800 + i, "name": f"U{i}", "updated": "2026-07-01",
+                        "completed": False, "duplicate": False})
+        return out
+
+    def test_a_quiet_account_is_not_warned_about(self):
+        state = library.crowding(self._entries(5), limit=25)
+        assert not state["crowded"] and not state["over"]
+
+    def test_warns_before_the_limit_rather_than_at_it(self):
+        """A watch that has already refused a workout has warned too late."""
+        state = library.crowding(self._entries(21), limit=25)
+        assert state["crowded"] and not state["over"]
+
+    def test_going_over_is_reported_separately(self):
+        state = library.crowding(self._entries(30), limit=25)
+        assert state["over"]
+
+    def test_duplicates_are_the_safest_thing_to_lose(self):
+        state = library.crowding(self._entries(3, duplicates=1), limit=25)
+        assert state["candidates"][0]["duplicate"] is True
+
+    def test_never_completed_ranks_above_used_workouts(self):
+        state = library.crowding(self._entries(3, unused=1), limit=25)
+        names = [c["name"] for c in state["candidates"]]
+        assert names[0] == "U0"
+
+    def test_the_limit_can_be_overridden_per_device(self):
+        """Watch models differ, and the fenix 8 figure is not confirmed."""
+        assert library.crowding(self._entries(30), limit=50)["over"] is False

@@ -21,6 +21,7 @@ safe direction is to leave it alone.
 
 from __future__ import annotations
 
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +30,14 @@ from . import history, workout as wk
 from .paths import data_home
 
 WORKOUTS_DIR = data_home() / "workouts"
+
+# Watches cap how many workouts they will hold, and the cap is the device's, not
+# the account's — everything synced to the watch counts, however it got there.
+# fenix 6 and 7 are documented at 25; the fenix 8 figure is not something I could
+# confirm, so the default stays at the conservative known number. Override with
+# GARMIN_WORKOUT_LIMIT once the watch tells you the real one.
+WATCH_LIMIT = int(os.getenv("GARMIN_WORKOUT_LIMIT", "25"))
+CROWDED = 0.8  # warn once this fraction of the limit is used
 STAMP = re.compile(r'^UPLOADED\s*=\s*["\']([^"\']+)["\']', re.M)
 
 
@@ -174,3 +183,70 @@ def backfill(client=None) -> int:
             mark_uploaded(entry["path"])
             stamped += 1
     return stamped
+
+
+def remote_workouts(client=None) -> list:
+    """
+    Workouts saved in Garmin Connect, with whether each was ever completed.
+
+    "Completed" is judged by matching the workout name against activity history.
+    It is a name match, so a renamed workout reads as unused — which is why
+    nothing here deletes anything on its own.
+    """
+    from .client import get_client
+
+    try:
+        client = client or get_client()
+        saved = client.connectapi("/workout-service/workouts?start=0&limit=100")
+        activities = {
+            (a.get("activityName") or "").strip()
+            for a in client.get_activities(0, 200)
+        }
+    except Exception:
+        return []
+    if not isinstance(saved, list):
+        return []
+
+    seen: dict = {}
+    out = []
+    for w in saved:
+        name = (w.get("workoutName") or "").strip()
+        entry = {
+            "id": w.get("workoutId"),
+            "name": name,
+            "updated": (w.get("updateDate") or "")[:10],
+            "completed": name in activities,
+            "duplicate": name in seen,
+        }
+        seen[name] = True
+        out.append(entry)
+    return out
+
+
+def crowding(entries: list | None = None, limit: int | None = None) -> dict:
+    """
+    How close the watch is to its workout cap, and what could go.
+
+    Candidates are ordered by how safe they are to lose: exact duplicates first,
+    then never-completed workouts, then the oldest. Nothing is deleted here —
+    removing a workout is irreversible and belongs to the athlete.
+    """
+    entries = remote_workouts() if entries is None else entries
+    limit = limit or WATCH_LIMIT
+
+    duplicates = [e for e in entries if e["duplicate"]]
+    unused = [e for e in entries if not e["completed"] and not e["duplicate"]]
+    rest = sorted(
+        (e for e in entries if not e["duplicate"] and e["completed"]),
+        key=lambda e: e["updated"],
+    )
+
+    return {
+        "count": len(entries),
+        "limit": limit,
+        "crowded": len(entries) >= limit * CROWDED,
+        "over": len(entries) > limit,
+        "candidates": duplicates + unused + rest,
+        "duplicates": duplicates,
+        "unused": unused,
+    }
