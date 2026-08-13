@@ -261,5 +261,133 @@
         "rest_seconds": 45
       }
     ]
+  },
+  {
+    "date": "2026-08-11T08:05:16+00:00",
+    "file": "workouts/back_biceps_3.py",
+    "name": "Back & Biceps 3",
+    "description": "Row rebuild \u2014 hold 60kg reverse-grip and 35kg cable row, chase reps not load. Curls progress. ~47 min.",
+    "exercises": [
+      {
+        "name": "REVERSE_GRIP_BARBELL_ROW",
+        "category": "ROW",
+        "sets": 4,
+        "reps": 8,
+        "rest_seconds": 90
+      },
+      {
+        "name": "30_DEGREE_LAT_PULLDOWN",
+        "category": "PULL_UP",
+        "sets": 3,
+        "reps": 9,
+        "rest_seconds": 75
+      },
+      {
+        "name": "SEATED_CABLE_ROW",
+        "category": "ROW",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "CHEST_SUPPORTED_DUMBBELL_ROW",
+        "category": "ROW",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "BARBELL_SHRUG",
+        "category": "SHRUG",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "INCLINE_DUMBBELL_BICEPS_CURL",
+        "category": "CURL",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "DUMBBELL_HAMMER_CURL",
+        "category": "CURL",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "REVERSE_EZ_BAR_CURL",
+        "category": "CURL",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 45
+      }
+    ]
+  },
+  {
+    "date": "2026-08-13T08:08:24+00:00",
+    "file": "workouts/shoulders_triceps_2.py",
+    "name": "Shoulders & Triceps 2",
+    "description": "Even 4/4 split. Arnold press leads, laterals progress to 11kg, dips and EZ-bar triceps. ~47 min.",
+    "exercises": [
+      {
+        "name": "ARNOLD_PRESS",
+        "category": "SHOULDER_PRESS",
+        "sets": 4,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "OVERHEAD_DUMBBELL_PRESS",
+        "category": "SHOULDER_PRESS",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "DUMBBELL_LATERAL_RAISE",
+        "category": "LATERAL_RAISE",
+        "sets": 4,
+        "reps": 12,
+        "rest_seconds": 60
+      },
+      {
+        "name": "SEATED_REAR_LATERAL_RAISE",
+        "category": "LATERAL_RAISE",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 45
+      },
+      {
+        "name": "CLOSE_GRIP_BARBELL_BENCH_PRESS",
+        "category": "BENCH_PRESS",
+        "sets": 3,
+        "reps": 8,
+        "rest_seconds": 90
+      },
+      {
+        "name": "CABLE_OVERHEAD_TRICEPS_EXTENSION",
+        "category": "TRICEPS_EXTENSION",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "LYING_EZ_BAR_TRICEPS_EXTENSION",
+        "category": "TRICEPS_EXTENSION",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "REVERSE_GRIP_TRICEPS_PRESSDOWN",
+        "category": "TRICEPS_EXTENSION",
+        "sets": 3,
+        "reps": 15,
+        "rest_seconds": 45
+      }
+    ]
   }
 ]

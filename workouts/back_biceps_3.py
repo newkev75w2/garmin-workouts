@@ -3,9 +3,13 @@
 #
 # Rebuild session for the two regressed rows.
 # Targets: Reverse-grip row 60kg (HOLD, rebuild from 70) · Seated cable row 35kg (HOLD, rebuild from 52)
-#          30-deg pulldown 52kg (hold until all sets hit 9) · Alt DB row 41.5kg (+2.5, progressing)
+#          30-deg pulldown 52kg (hold until all sets hit 9)
 #          Shrug 75kg (+5, ready) · Incline curl 20kg (hold) · Hammer 12kg (hold) · Reverse EZ 37.5kg (+2.5)
 # NOTE: barbell biceps curl deliberately omitted — last log reads 19kg vs your usual 35kg (check-data).
+# NOTE: chest-supported DB row replaces alternating DB row at the user's request. That drops a
+#       [progressing] lift (39 -> 41.5kg over 5 sessions), so this slot restarts as a new baseline.
+#       No body English or leg drive on a chest-supported row — expect to need well under 39kg.
+#       Start ~25-30kg per hand, find the weight, repeat it next week to establish the trend.
 
 WORKOUT = {
     "name": "Back & Biceps 3",
@@ -14,10 +18,13 @@ WORKOUT = {
         {"name": "REVERSE_GRIP_BARBELL_ROW",   "category": "ROW",     "sets": 4, "reps": 8,  "rest_seconds": 90},
         {"name": "30_DEGREE_LAT_PULLDOWN",     "category": "PULL_UP", "sets": 3, "reps": 9,  "rest_seconds": 75},
         {"name": "SEATED_CABLE_ROW",           "category": "ROW",     "sets": 3, "reps": 10, "rest_seconds": 75},
-        {"name": "ALTERNATING_DUMBBELL_ROW",   "category": "ROW",     "sets": 3, "reps": 10, "rest_seconds": 75},
+        {"name": "CHEST_SUPPORTED_DUMBBELL_ROW", "category": "ROW",   "sets": 3, "reps": 10, "rest_seconds": 75},
         {"name": "BARBELL_SHRUG",              "category": "SHRUG",   "sets": 3, "reps": 10, "rest_seconds": 60},
         {"name": "INCLINE_DUMBBELL_BICEPS_CURL", "category": "CURL",  "sets": 3, "reps": 10, "rest_seconds": 60},
         {"name": "DUMBBELL_HAMMER_CURL",       "category": "CURL",    "sets": 3, "reps": 12, "rest_seconds": 60},
         {"name": "REVERSE_EZ_BAR_CURL",        "category": "CURL",    "sets": 3, "reps": 12, "rest_seconds": 45},
     ],
 }
+
+# Uploaded to Garmin Connect — this file is no longer a draft.
+UPLOADED = "2026-08-11T08:05:16+00:00"

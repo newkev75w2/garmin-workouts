@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.10.0**
+**Skill build: v1.11.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -329,6 +329,23 @@ Aim for as little overlap between options as possible so the user gets a real ch
 exercise names that appear in the Exercise Reference table below — every entry there is verified
 against Garmin's real FIT SDK, so there's no risk of picking something that fails validation later.
 
+### Step 3a — Keep the session in one place at a time
+
+Order exercises so each station is used once and left. Bench, bench, cable, bench means walking
+away from a bench mid-session and finding it taken — the workout reads fine and runs badly.
+
+`garmin validate` reports station revisits and prints a suggested order. Act on it.
+
+**Group within the effort tier, don't reorder across it.** Heaviest compounds still come first,
+while the lifter is fresh; grouping applies to what's left. If a heavy barbell lift and a cable
+finisher are on different stations, that's one walk and it's fine — the problem is only ever
+going *back*.
+
+Station is inferred from the exercise name because Garmin's categories describe the movement, not
+the kit: `BENCH_PRESS` covers both a barbell on a flat bench and a dumbbell press. The inference
+is a heuristic and occasionally wrong (a kneeling cable flye may read as bench work) — if the user
+says the order is off, believe them over the tool.
+
 ### Step 3b — Always link a demo for every exercise
 
 **The user does not want to go hunting for form videos.** So never present a bare exercise name.
@@ -368,6 +385,22 @@ Where:
 
 Then run `garmin validate workouts/<filename>.py` yourself (via shell) to confirm it's clean
 before telling the user it's ready — don't just trust the reference table, actually check.
+
+### Step 4c — Moving a session to a different day
+
+**Uploaded workouts carry no date.** A workout on the watch is just a workout; the plan's "Tue:
+triceps + chest" is advice, not a booking. So doing Wednesday's session on Thursday needs nothing
+uploaded, deleted or rescheduled — just do it.
+
+What *does* change is the spacing. Re-run the plan with the days that actually apply
+(`garmin plan --weekdays ...`) and check two things: no leg session directly beside a quality run,
+and each muscle group still getting 48 hours. Say plainly if the swap breaks one of those; say
+plainly if it doesn't, rather than inventing a problem.
+
+**On the watch's workout limit**: workouts accumulate in Garmin Connect and sync down. If the
+watch is full, the fix is deleting old ones in Garmin Connect — there is no scheduling trick that
+avoids it, and this tool has no verified way to delete them for the user. Keeping the local
+library tidy (Step 4a) reduces how fast they pile up but does not manage the watch.
 
 ### Step 5 — Upload
 

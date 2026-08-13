@@ -152,6 +152,19 @@ def _run_validate(args) -> None:
         "are valid Garmin FIT SDK entries."
     )
 
+    # Valid but awkward: walking back to a station you already left usually means
+    # losing it to someone else.
+    from . import stations
+
+    revisits = stations.revisits(w["exercises"])
+    if revisits:
+        print(f"\n  {len(revisits)} station revisit(s) — you'd walk back to:")
+        for r in revisits:
+            print(f"    {r['station']:<10} for {r['exercise'].replace('_', ' ').title()}")
+        print("  Suggested order:")
+        for e in stations.group_by_station(w["exercises"]):
+            print(f"    {e['name'].replace('_', ' ').title()}  ({stations.station_of(e['name'])})")
+
 
 def _run_upload(args) -> None:
     from . import history, validation, workout as wk
