@@ -162,3 +162,26 @@ class TestTimedExercises:
             a_store(an_activity(days_ago(2), "Core", sets))
         )["PLANK"][0]
         assert summary["working_reps"] == [60]
+
+
+class TestNewExercises:
+    def test_an_unseen_exercise_is_flagged(self):
+        """
+        Programming a movement someone has never performed, without saying so,
+        is how people load a lift they don't know how to do.
+        """
+        store = a_store(an_activity(days_ago(3), "Legs",
+                                    [a_set("BARBELL_SQUAT", 8, 80.0, "SQUAT")]))
+        assert st.never_done(["BARBELL_SQUAT", "RUSSIAN_TWIST"], store) == ["RUSSIAN_TWIST"]
+
+    def test_an_empty_history_makes_everything_new(self):
+        """Safe direction: an unnecessary form video costs seconds."""
+        assert st.never_done(["ANYTHING"], {"activities": {}}) == ["ANYTHING"]
+
+    def test_the_demo_link_is_searchable(self):
+        url = st.demo_url("_30_DEGREE_LAT_PULLDOWN")
+        assert "30+degree+lat+pulldown" in url
+        assert url.startswith("https://www.youtube.com")
+
+    def test_leading_underscores_do_not_leak_into_the_search(self):
+        assert "_" not in st.demo_url("_45_DEGREE_PLANK").split("search_query=")[1]

@@ -160,6 +160,20 @@ def _run_validate(args) -> None:
         "are valid Garmin FIT SDK entries."
     )
 
+    # Anything they have never done deserves a form video before they load it.
+    from . import store as _store
+
+    names = [e["name"] for e in w["exercises"]]
+    try:
+        new = _store.never_done(names)
+    except Exception:
+        new = []
+    if new:
+        print(f"\n  {len(new)} exercise(s) you've never logged — check the form first:")
+        for n in new:
+            print(f"    {n.replace('_', ' ').title()}")
+            print(f"      {_store.demo_url(n)}")
+
     # Valid but awkward: walking back to a station you already left usually means
     # losing it to someone else.
     from . import stations

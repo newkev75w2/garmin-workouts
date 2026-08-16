@@ -30,10 +30,12 @@ ask to create a Garmin gym/strength workout.
    garmin upload workouts/<filename>.py
    ```
 
-Each generated workout has **at least 8 exercises**, ordered heaviest-compound
-first, and **per-exercise rest times** (never a single blanket rest value) —
-compounds top out at 90s, moderate lifts 75s, isolation 60s, high-rep
-finishers 45s.
+The three options differ in **shape**, not just exercise choice: a heavy option
+of 5–7 movements with long rests, a standard 8–9, and a dense 10–12 with short
+rests. All land in the same 45–50 minutes — what changes is how the time is
+spent. Exercises are ordered heaviest-compound first, grouped so you don't walk
+back to a station you already left, with **per-exercise rest times** (never one
+blanket value): compounds 90s, moderate lifts 75s, isolation 60s, finishers 45s.
 
 ## Closing the loop
 

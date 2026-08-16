@@ -11,6 +11,10 @@
 #          Standing calf 50kg (baseline, repeat)
 # NOTE: no back squat this session, so the 100 -> 105kg jump waits for next legs day.
 #       Deadlift is programmed FIRST so you are not pulling on pre-fatigued legs.
+# NOTE (14 Aug): core block adjusted for freshly waxed torso/armpits. Hanging knee raise
+#       (arms overhead = armpit friction) and plank (torso on floor mat) swapped for
+#       Russian twist and cable side bend — both seated/standing, no skin contact with
+#       equipment. Revert to hanging knee raise + plank next legs session.
 
 WORKOUT = {
     "name": "Legs & Core 2",
@@ -22,7 +26,7 @@ WORKOUT = {
         {"name": "LEG_CURL",              "category": "LEG_CURL",   "sets": 3, "reps": 8,  "rest_seconds": 60},
         {"name": "STANDING_CALF_RAISE",   "category": "CALF_RAISE", "sets": 3, "reps": 12, "rest_seconds": 45},
         {"name": "KNEELING_CABLE_CRUNCH", "category": "CRUNCH",     "sets": 3, "reps": 15, "rest_seconds": 60},
-        {"name": "HANGING_KNEE_RAISE",    "category": "LEG_RAISE",  "sets": 3, "reps": 12, "rest_seconds": 45},
-        {"name": "PLANK",                 "category": "PLANK",      "sets": 3, "seconds": 45, "rest_seconds": 45},
+        {"name": "RUSSIAN_TWIST",         "category": "CORE",       "sets": 3, "reps": 20, "rest_seconds": 45},
+        {"name": "CABLE_SIDE_BEND",       "category": "CORE",       "sets": 3, "reps": 15, "rest_seconds": 45},
     ],
 }

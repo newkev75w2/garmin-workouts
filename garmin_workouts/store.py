@@ -235,3 +235,35 @@ def days_since(iso_date: str, as_of: date | None = None) -> int:
         return (reference - datetime.strptime(iso_date, "%Y-%m-%d").date()).days
     except ValueError:
         return 0
+
+
+def ever_performed(store: dict | None = None) -> set:
+    """Every exercise name that appears anywhere in the synced history."""
+    store = store if store is not None else read_store()
+    return {
+        s["exercise"]
+        for act in store.get("activities", {}).values()
+        for s in act.get("sets", [])
+        if s.get("exercise")
+    }
+
+
+def never_done(names: list, store: dict | None = None) -> list:
+    """
+    Which of these the athlete has no record of ever doing.
+
+    Judged against synced history, so an exercise done before syncing started
+    reads as new. That is the safe direction: an unnecessary form video costs a
+    few seconds, whereas silently programming an unfamiliar movement is how
+    people load a lift they have never performed.
+    """
+    performed = ever_performed(store)
+    return [n for n in names if n not in performed]
+
+
+def demo_url(exercise: str) -> str:
+    """A YouTube search for how to perform an exercise."""
+    import urllib.parse
+
+    query = exercise.lstrip("_").replace("_", " ").lower() + " proper form"
+    return "https://www.youtube.com/results?search_query=" + urllib.parse.quote_plus(query)

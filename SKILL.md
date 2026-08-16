@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.13.0**
+**Skill build: v1.14.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).
@@ -303,27 +303,46 @@ for the same muscle groups — not just the same movements with different rep co
 three different routes to train the same muscles: one might be barbell-led, one dumbbell/cable-led,
 one machine-led, or they simply emphasise different angles and movement patterns.
 
-**Exercise count is not fixed.** Let it fall out of the time budget and the design of each option —
-a dense, short-rest circuit-style session might run 10–12 exercises, while a heavy compound day with
-90s rests might only fit 6–7. Varying the count *between* options is a feature, not a flaw: it gives
-the user a real structural choice, not just three flavours of the same shape. Say what each option
-trades off (fewer heavier movements vs. more variety/volume) so the choice is informed. Just keep
-total time in the target range and order things sensibly.
+**The three options must differ in exercise count, not just in exercise choice.** This is a
+requirement, not a preference. Left alone, every option drifts to eight movements and the user gets
+three flavours of one workout — in a real log, 13 of 19 generated sessions landed on exactly eight.
+
+**Link a form video for anything they have never done.** `garmin validate` reports which
+exercises have no record in their history and prints a YouTube search for each. Pass those on
+without being asked — programming an unfamiliar movement and saying nothing is how someone loads a
+lift they do not know how to perform. An exercise done before syncing began also reads as new;
+that is the safe direction and an unnecessary video costs seconds.
+
+Build them to different shapes:
+
+| | Movements | Sets | Rest | What it is |
+|---|---|---|---|---|
+| **Heavy** | 5–7 | 4–5 | 90s | Fewer lifts, more sets each, long rests |
+| **Standard** | 8–9 | 3–4 | 60–90s | The middle option |
+| **Dense** | 10–12 | 2–3 | 45–60s | More movements, fewer sets, short rests |
+
+**The spread between your smallest and largest option must be at least 3 movements.** If A has 7,
+C needs 10 or more. Three options at 7, 8, 8 is a failure — go back and rebuild one as a genuinely
+heavy session or a genuinely dense one.
+
+They all land in the same 45–50 minutes; what changes is how the time is spent. Fewer movements
+means more sets and longer rests on each, not a shorter workout. Say what each option trades off so
+the choice is informed.
 
 Label them A / B / C and list the exercises with sets×reps inline, plus a one-line note on what
 each option is *for*. Example for chest + shoulders:
 
-> **Option A** — Barbell-anchored, 7 exercises
-> Barbell Bench Press 4×8 · Incline Barbell Bench Press 3×10 · Cable Crossover 3×12 · Barbell Shoulder Press 4×8 · Barbell Push Press 3×8 · Dumbbell Lateral Raise 3×15 · Bent-Over Lateral Raise 3×15
-> *Heaviest option, fewer movements, longest rests — strength focus.*
+> **Option A** — Barbell-anchored, 6 exercises (heavy)
+> Barbell Bench Press 5×6 · Incline Barbell Bench Press 4×8 · Barbell Shoulder Press 5×6 · Barbell Push Press 4×8 · Dumbbell Lateral Raise 4×12 · Cable Crossover 3×12
+> *Six movements, five sets on the big lifts, 90s rests — strength focus.*
 >
-> **Option B** — Dumbbell & cable, 8 exercises
+> **Option B** — Dumbbell & cable, 9 exercises (standard)
 > Incline Dumbbell Bench Press 4×10 · Dumbbell Bench Press 3×10 · Cable Crossover 3×12 · Incline Dumbbell Flye 3×12 · Arnold Press 3×10 · Seated Dumbbell Shoulder Press 3×10 · One Arm Cable Lateral Raise 3×15 · Front Raise 3×12
-> *More volume, joint-friendlier, hits more angles.*
+> *Nine movements at 3–4 sets — the balanced middle.*
 >
-> **Option C** — Machine + free weight mix, 10 exercises
+> **Option C** — Machine + free weight mix, 11 exercises (dense)
 > Dumbbell Flye 4×12 · Smith Machine Bench Press 3×10 · Incline Dumbbell Bench Press 3×10 · Cable Crossover 3×15 · Seated Dumbbell Shoulder Press 4×10 · Dumbbell Lateral Raise 3×15 · Kneeling Rear Flye 3×12 · Face Pull 3×15 · Front Raise 3×12 · Seated Rear Lateral Raise 3×15
-> *Highest exercise variety, shorter rests, most stable/controlled.*
+> *Eleven movements at 2–3 sets, 45–60s rests — variety and density.*
 
 Aim for as little overlap between options as possible so the user gets a real choice. Only use
 exercise names that appear in the Exercise Reference table below — every entry there is verified
