@@ -1,0 +1,27 @@
+{
+  "gym": "The Gym Group London Paddington (Merchant Square)",
+  "has": [
+    "squat racks (8 Olympic rigs)",
+    "cable stations (5)",
+    "plate-loaded stations (7)",
+    "adjustable benches (18)",
+    "dumbbells 2-50kg",
+    "kettlebells",
+    "battle rope",
+    "ski erg",
+    "assault bike",
+    "hip thrust bench",
+    "glute drive",
+    "treadmills (20)",
+    "cross trainers (8)",
+    "bikes (6)",
+    "Concept II rowers (4)",
+    "climbmills (3)"
+  ],
+  "lacks": [],
+  "limits": {
+    "dumbbell_kg": 50
+  },
+  "source": "thegymgroup.com listing and gym directories, Aug 2026 \u2014 describes areas rather than naming individual machines, so specific plate-loaded kit (leg extension, pec deck, hack squat) is UNRECORDED, not absent",
+  "notes": "Verify specific machines at the gym and add with `garmin gym --has`."
+}

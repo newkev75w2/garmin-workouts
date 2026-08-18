@@ -631,5 +631,69 @@
         "rest_seconds": 60
       }
     ]
+  },
+  {
+    "date": "2026-08-18T08:38:32+00:00",
+    "file": "workouts/back_biceps_4.py",
+    "name": "Back & Biceps 4",
+    "description": "Heavy row day. Reverse-grip row to 85kg, cable row to 57.5kg \u2014 both flying after the rebuild. ~47 min.",
+    "exercises": [
+      {
+        "name": "REVERSE_GRIP_BARBELL_ROW",
+        "category": "ROW",
+        "sets": 4,
+        "reps": 8,
+        "rest_seconds": 90
+      },
+      {
+        "name": "30_DEGREE_LAT_PULLDOWN",
+        "category": "PULL_UP",
+        "sets": 3,
+        "reps": 9,
+        "rest_seconds": 75
+      },
+      {
+        "name": "SEATED_CABLE_ROW",
+        "category": "ROW",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "CHEST_SUPPORTED_DUMBBELL_ROW",
+        "category": "ROW",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 75
+      },
+      {
+        "name": "BARBELL_SHRUG",
+        "category": "SHRUG",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "INCLINE_DUMBBELL_BICEPS_CURL",
+        "category": "CURL",
+        "sets": 3,
+        "reps": 10,
+        "rest_seconds": 60
+      },
+      {
+        "name": "DUMBBELL_HAMMER_CURL",
+        "category": "CURL",
+        "sets": 3,
+        "reps": 12,
+        "rest_seconds": 45
+      },
+      {
+        "name": "ONE_ARM_CONCENTRATION_CURL",
+        "category": "CURL",
+        "sets": 3,
+        "reps": 8,
+        "rest_seconds": 45
+      }
+    ]
   }
 ]

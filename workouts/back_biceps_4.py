@@ -30,4 +30,4 @@ WORKOUT = {
 }
 
 # Uploaded to Garmin Connect — this file is no longer a draft.
-UPLOADED = "2026-08-16T20:48:15+00:00"
+UPLOADED = "2026-08-18T08:38:32+00:00"

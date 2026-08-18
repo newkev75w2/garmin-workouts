@@ -398,3 +398,24 @@ def run_cleanup(keep_free: int = 5, assume_yes: bool = False) -> None:
     for e in result["failed"]:
         print(f"    failed: {e['name']}")
     print()
+
+
+def print_blocks(date: str) -> None:
+    """Unnamed sets from one session, grouped so they can be named."""
+    from . import labelling
+
+    found = labelling.blocks(date)
+    if not found:
+        print(f"\n  Nothing unnamed on {date} — every set was identified.\n")
+        return
+
+    print(f"\n  Unnamed sets on {date}. Name a block to add it to your history:\n")
+    for n, block in enumerate(found, 1):
+        detail = ", ".join(
+            f"{s['reps']}x{s['weight_kg']}kg" if s["weight_kg"] else f"{s['reps']} reps"
+            for s in block["sets"]
+        )
+        print(f"    [{n}] {block['name'][:26]:<28} {detail}")
+
+    print("\n  garmin label <date> <block> <EXERCISE_NAME> <CATEGORY>")
+    print("  e.g. garmin label 2026-08-18 1 BACK_EXTENSION HYPEREXTENSION\n")

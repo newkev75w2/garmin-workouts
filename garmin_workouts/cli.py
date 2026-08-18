@@ -72,6 +72,21 @@ def build_parser() -> argparse.ArgumentParser:
                           help="override; otherwise uses your own logged pace")
     dist_cmd.add_argument("--zone", default="easy", choices=["easy", "moderate", "hard"])
 
+    gym_cmd = sub.add_parser("gym", help="what your gym has, and what you haven't used lately")
+    gym_cmd.add_argument("--set-gym", metavar="NAME", help="name your gym")
+    gym_cmd.add_argument("--has", nargs="+", metavar="ITEM", help="add equipment")
+    gym_cmd.add_argument("--lacks", nargs="+", metavar="ITEM", help="record what's missing")
+
+    unnamed_cmd = sub.add_parser("unnamed",
+                                 help="sets the watch recorded but could not identify")
+    unnamed_cmd.add_argument("date", help="YYYY-MM-DD")
+
+    label_cmd = sub.add_parser("label", help="name a block of unnamed sets")
+    label_cmd.add_argument("date")
+    label_cmd.add_argument("block", type=int)
+    label_cmd.add_argument("exercise")
+    label_cmd.add_argument("category")
+
     lib_cmd = sub.add_parser("workouts", help="local workout files and whether they were used")
     lib_cmd.add_argument("--check-garmin", action="store_true",
                          help="also ask Garmin about files with no upload stamp")
@@ -273,6 +288,90 @@ def _run_distance(args) -> None:
     report.print_distance(args.minutes, args.pace, args.zone)
 
 
+def _run_gym(args) -> None:
+    from . import equipment
+
+    data = equipment.load()
+    changed = False
+    if args.set_gym:
+        data["gym"] = args.set_gym
+        changed = True
+    for field, values in (("has", args.has), ("lacks", args.lacks)):
+        if values:
+            data[field] = sorted(set(data[field]) | set(values))
+            changed = True
+    if changed:
+        equipment.save(data)
+
+    print(f"\n  Gym: {data['gym'] or '(not set)'}")
+    if data.get("source"):
+        print(f"  Source: {data['source']}")
+    print(f"  Has ({len(data['has'])}): {', '.join(data['has']) or '(nothing recorded)'}")
+    if data["lacks"]:
+        print(f"  Lacks: {', '.join(data['lacks'])}")
+
+    # Anything logged above what the gym owns is a convention problem, not a lift.
+    from . import store as _store
+
+    try:
+        impossible = []
+        for act in _store.read_store().get("activities", {}).values():
+            for s in act.get("sets", []):
+                if s.get("exercise") and s.get("weight_kg"):
+                    note = equipment.exceeds_limit(s["exercise"], s["weight_kg"])
+                    if note:
+                        impossible.append((s["exercise"], note))
+        if impossible:
+            print("\n  Logged above what this gym has:")
+            for name, note in dict(impossible).items():
+                print(f"    {name.replace('_', ' ').title()}: {note}")
+    except Exception:
+        pass
+
+    idle = equipment.unused_kit()
+    if idle:
+        print("\n  Not used in 45 days — where variety is available:")
+        for item in idle:
+            print(f"    {item}")
+    elif data["has"]:
+        print("\n  Everything recorded has been used recently.")
+    print()
+
+
+def _run_unnamed(args) -> None:
+    report.print_blocks(args.date)
+
+
+def _run_label(args) -> None:
+    from . import labelling
+
+    result = labelling.label(args.date, args.block, args.exercise.upper(),
+                             args.category.upper())
+    if result.get("error"):
+        print(f"  {result['error']}")
+        return
+    detail = ", ".join(
+        f"{s['reps']}x{s['weight_kg']}kg" if s["weight_kg"] else f"{s['reps']} reps"
+        for s in result["sets"]
+    )
+    print(f"  Labelled {result['updated']} set(s) as {result['exercise']}: {detail}")
+    print("  It now counts toward that exercise's history and verdicts.")
+
+    # Block numbers are positional, so naming one renumbers the rest. Showing
+    # what is left stops the next label landing on the wrong sets.
+    from . import labelling
+
+    remaining = labelling.blocks(args.date)
+    if remaining:
+        print(f"\n  {len(remaining)} block(s) still unnamed, renumbered:")
+        for n, block in enumerate(remaining, 1):
+            d = ", ".join(
+                f"{s['reps']}x{s['weight_kg']}kg" if s["weight_kg"] else f"{s['reps']} reps"
+                for s in block["sets"]
+            )
+            print(f"    [{n}] {d}")
+
+
 def _run_library(args) -> None:
     from . import library
 
@@ -328,6 +427,9 @@ HANDLERS = {
     "suggest": _run_suggest,
     "run": _run_running,
     "workouts": _run_library,
+    "unnamed": _run_unnamed,
+    "gym": _run_gym,
+    "label": _run_label,
     "distance": _run_distance,
     "plan": _run_plan,
     "coach": _run_coach,
