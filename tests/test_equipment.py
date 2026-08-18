@@ -78,3 +78,29 @@ class TestLimits:
         equipment.save({"gym": "X", "has": [], "lacks": [], "limits": {},
                         "notes": "", "source": ""})
         assert equipment.exceeds_limit("DUMBBELL_PUSH_PRESS", 200.0) is None
+
+
+class TestProvenKit:
+    def test_a_logged_set_proves_the_machine_existed(self):
+        """
+        Stronger evidence than any published list: a set logged against a leg
+        press means the leg press was there, and it needs no maintenance.
+        """
+        store = {"activities": {"1": {"date": "2026-08-01", "sets": [
+            {"exercise": "LEG_PRESS"}, {"exercise": "CABLE_CROSSOVER"}]}}}
+        proven = equipment.proven_kit(store)
+        assert "leg press" in proven and "cable station" in proven
+
+    def test_cable_attachments_count_as_a_cable_station(self):
+        """A triceps pushdown is a cable station, not its own machine."""
+        store = {"activities": {"1": {"date": "2026-08-01", "sets": [
+            {"exercise": "TRICEPS_PRESSDOWN"}]}}}
+        assert "cable station" in equipment.proven_kit(store)
+
+    def test_unused_machines_are_not_claimed(self):
+        store = {"activities": {"1": {"date": "2026-08-01", "sets": [
+            {"exercise": "BARBELL_SQUAT"}]}}}
+        assert "leg press" not in equipment.proven_kit(store)
+
+    def test_an_empty_history_proves_nothing(self):
+        assert equipment.proven_kit({"activities": {}}) == {}

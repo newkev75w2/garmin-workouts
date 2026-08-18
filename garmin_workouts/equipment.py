@@ -77,6 +77,47 @@ def exceeds_limit(exercise: str, weight: float) -> str | None:
     return None
 
 
+# Exercise-name fragments that prove a piece of kit exists. If a set was logged
+# against it, the machine was there — better evidence than any published list.
+PROVEN_BY = {
+    "cable station": ("CABLE", "PULLDOWN", "PUSHDOWN", "PRESSDOWN", "CROSSOVER"),
+    "lat pulldown": ("LAT_PULLDOWN",),
+    "leg curl": ("LEG_CURL",),
+    "leg extension": ("LEG_EXTENSION",),
+    "leg press": ("LEG_PRESS",),
+    "smith machine": ("SMITH",),
+    "pec deck": ("PEC_DECK", "PECK_DECK"),
+    "hack squat": ("HACK_SQUAT",),
+    "hip thrust bench": ("HIP_THRUST",),
+}
+
+
+def proven_kit(store: dict | None = None) -> dict:
+    """
+    Equipment the athlete has demonstrably used, from their own logged sets.
+
+    A published gym listing goes stale and describes areas rather than machines.
+    A set logged against a leg press is proof the leg press was there — this is
+    the most reliable source available and needs no maintenance.
+    """
+    from . import store as _store
+
+    store = store if store is not None else _store.read_store()
+    names = {
+        s["exercise"]
+        for act in store.get("activities", {}).values()
+        for s in act.get("sets", [])
+        if s.get("exercise")
+    }
+
+    found = {}
+    for item, fragments in PROVEN_BY.items():
+        used = sorted(n for n in names if any(f in n for f in fragments))
+        if used:
+            found[item] = used
+    return found
+
+
 def unused_kit(store: dict | None = None, days: int = 45) -> list:
     """
     Equipment the gym has that has not been touched lately.

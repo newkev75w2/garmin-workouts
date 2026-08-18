@@ -2,19 +2,24 @@
   "gym": "The Gym Group London Paddington (Merchant Square)",
   "has": [
     "squat racks (8 Olympic rigs)",
-    "cable stations (5)",
+    "smith press (1)",
     "plate-loaded stations (7)",
+    "cable stations (5, incl. 8-stack and functional trainer)",
+    "leg press (2)",
+    "chest press (2)",
+    "shoulder press (2)",
+    "leg extension (2)",
     "adjustable benches (18)",
     "dumbbells 2-50kg",
-    "kettlebells",
-    "battle rope",
-    "ski erg",
-    "assault bike",
-    "hip thrust bench",
-    "glute drive",
+    "kettlebells 4-24kg",
+    "battle rope (1)",
+    "ski erg (2 Concept II)",
+    "assault bike (1)",
+    "hip thrust bench (1)",
+    "glute drive (1)",
     "treadmills (20)",
     "cross trainers (8)",
-    "bikes (6)",
+    "bikes (6, upright/recumbent/spin)",
     "Concept II rowers (4)",
     "climbmills (3)"
   ],
@@ -22,6 +27,6 @@
   "limits": {
     "dumbbell_kg": 50
   },
-  "source": "thegymgroup.com listing and gym directories, Aug 2026 \u2014 describes areas rather than naming individual machines, so specific plate-loaded kit (leg extension, pec deck, hack squat) is UNRECORDED, not absent",
-  "notes": "Verify specific machines at the gym and add with `garmin gym --has`."
+  "source": "thegymgroup.com gym listing, Aug 2026. Names its resistance machines (10+ incl. 2 leg press, 2 chest press, 2 shoulder press, 2 leg extension) but NOT every one: abs crunch machine, pec deck, hack squat and leg curl are unrecorded rather than absent. Kit under 'proven' is confirmed by logged sessions, which outranks this list.",
+  "notes": "Triceps pushdown and cable crunch run off the 5 cable stations rather than dedicated machines. Confirm anything unrecorded in person and add with `garmin gym --has`."
 }

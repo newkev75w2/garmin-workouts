@@ -19,7 +19,7 @@ description: >
 
 # Garmin Strength Workout Builder
 
-**Skill build: v1.15.0**
+**Skill build: v1.16.0**
 
 Generate custom gym workouts and write them as Python files the user uploads to Garmin Connect.
 All workouts target a **fully equipped gym** (barbells, cables, machines, dumbbells, smith machine).

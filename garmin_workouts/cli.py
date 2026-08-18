@@ -328,6 +328,12 @@ def _run_gym(args) -> None:
     except Exception:
         pass
 
+    proven = equipment.proven_kit()
+    if proven:
+        print(f"\n  Proven by your own sessions ({len(proven)}) — these definitely exist:")
+        for item, used in proven.items():
+            print(f"    {item:<18} {used[0].replace('_', ' ').title()[:34]}")
+
     idle = equipment.unused_kit()
     if idle:
         print("\n  Not used in 45 days — where variety is available:")
