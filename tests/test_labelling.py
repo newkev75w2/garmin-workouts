@@ -6,7 +6,6 @@ every verdict until named. Getting the grouping wrong merges two exercises into
 one, which then produces a history for a lift that was never performed.
 """
 
-import pytest
 
 from conftest import a_set, a_store, an_activity
 

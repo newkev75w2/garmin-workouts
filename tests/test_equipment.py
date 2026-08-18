@@ -6,7 +6,6 @@ treating an unrecorded machine as absent is as unhelpful as prescribing one the
 gym does not own.
 """
 
-import json
 
 import pytest
 
